@@ -69,12 +69,16 @@ const Navigation = () => {
             <Badge variant="secondary" className="bg-accent text-accent-foreground">
               Fermer
             </Badge>
-            <Button variant="outline" size="sm">
-              Kirish
-            </Button>
-            <Button className="btn-farm" size="sm">
-              Ro'yxatdan o'tish
-            </Button>
+            <Link to="/auth">
+              <Button variant="outline" size="sm">
+                Kirish
+              </Button>
+            </Link>
+            <Link to="/auth">
+              <Button className="btn-farm" size="sm">
+                Ro'yxatdan o'tish
+              </Button>
+            </Link>
           </div>
 
           {/* Mobile menu trigger */}
@@ -119,12 +123,16 @@ const Navigation = () => {
                 })}
                 
                 <div className="pt-6 border-t border-border space-y-3">
-                  <Button variant="outline" className="w-full">
-                    Kirish
-                  </Button>
-                  <Button className="btn-farm w-full">
-                    Ro'yxatdan o'tish
-                  </Button>
+                  <Link to="/auth" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" className="w-full">
+                      Kirish
+                    </Button>
+                  </Link>
+                  <Link to="/auth" onClick={() => setIsOpen(false)}>
+                    <Button className="btn-farm w-full">
+                      Ro'yxatdan o'tish
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </SheetContent>
