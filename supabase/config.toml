@@ -1,1 +1,13 @@
 project_id = "hrmnqyzvqqihloxrexwj"
+
+[functions.create-order]
+verify_jwt = true
+
+[functions.update-order-status]
+verify_jwt = true
+
+[functions.ai-farm-assistant]
+verify_jwt = false
+
+[functions.get-product-recommendations]
+verify_jwt = false
