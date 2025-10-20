@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Users, Package, ShoppingCart, LogOut } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdminCommandPanel } from "@/components/AdminCommandPanel";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ const Admin = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState("users");
 
   useEffect(() => {
     checkAdminAccess();
@@ -100,6 +102,34 @@ const Admin = () => {
     }
   };
 
+  const handleNavigate = (section: string) => {
+    setActiveTab(section);
+  };
+
+  const handleSearchUser = (userId: string) => {
+    setActiveTab("users");
+    toast({
+      title: "Foydalanuvchi topildi",
+      description: `User ID: ${userId}`,
+    });
+  };
+
+  const handleSearchProduct = (productId: string) => {
+    setActiveTab("products");
+    toast({
+      title: "Mahsulot topildi",
+      description: `Product ID: ${productId}`,
+    });
+  };
+
+  const handleSearchOrder = (orderId: string) => {
+    setActiveTab("orders");
+    toast({
+      title: "Buyurtma topildi",
+      description: `Order ID: ${orderId}`,
+    });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -115,12 +145,24 @@ const Admin = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center gap-4">
           <h1 className="text-2xl font-bold">Admin Panel</h1>
-          <Button onClick={handleSignOut} variant="outline">
-            <LogOut className="mr-2 h-4 w-4" />
-            Chiqish
-          </Button>
+          <div className="flex items-center gap-3">
+            <AdminCommandPanel
+              users={users}
+              products={products}
+              orders={orders}
+              onNavigate={handleNavigate}
+              onSignOut={handleSignOut}
+              onSearchUser={handleSearchUser}
+              onSearchProduct={handleSearchProduct}
+              onSearchOrder={handleSearchOrder}
+            />
+            <Button onClick={handleSignOut} variant="outline">
+              <LogOut className="mr-2 h-4 w-4" />
+              Chiqish
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -157,7 +199,7 @@ const Admin = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="users" className="space-y-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList>
             <TabsTrigger value="users">Foydalanuvchilar</TabsTrigger>
             <TabsTrigger value="products">Mahsulotlar</TabsTrigger>
