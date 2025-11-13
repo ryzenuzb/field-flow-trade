@@ -5,6 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ProductCard from "@/components/ui/product-card";
+import productTomato from "@/assets/product-tomato.jpg";
+import productWheat from "@/assets/product-wheat.jpg";
+import productMilk from "@/assets/product-milk.jpg";
+import productApricot from "@/assets/product-apricot.jpg";
+import productCarrot from "@/assets/product-carrot.jpg";
+import productCottonSeeds from "@/assets/product-cotton-seeds.jpg";
 
 const Marketplace = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -18,7 +24,7 @@ const Marketplace = () => {
       name: "Organik pomidor",
       price: 15000,
       unit: "kg",
-      image: "/api/placeholder/300/200",
+      image: productTomato,
       seller: "Ali Valiyev",
       location: "Toshkent vil.",
       rating: 4.8,
@@ -30,7 +36,7 @@ const Marketplace = () => {
       name: "Yangi bug'doy",
       price: 3500,
       unit: "kg",
-      image: "/api/placeholder/300/200",
+      image: productWheat,
       seller: "Karim Abdullayev",
       location: "Sirdaryo vil.",
       rating: 4.9,
@@ -42,7 +48,7 @@ const Marketplace = () => {
       name: "Toza mol suti",
       price: 8000,
       unit: "litr",
-      image: "/api/placeholder/300/200",
+      image: productMilk,
       seller: "Nodira Tosheva",
       location: "Samarqand vil.",
       rating: 4.7,
@@ -54,7 +60,7 @@ const Marketplace = () => {
       name: "Shirinoy",
       price: 25000,
       unit: "kg",
-      image: "/api/placeholder/300/200",
+      image: productApricot,
       seller: "Bobur Rahimov",
       location: "Farg'ona vil.",
       rating: 4.6,
@@ -66,7 +72,7 @@ const Marketplace = () => {
       name: "Organik sabzi",
       price: 12000,
       unit: "kg",
-      image: "/api/placeholder/300/200",
+      image: productCarrot,
       seller: "Feruza Nazarova",
       location: "Qashqadaryo vil.",
       rating: 4.8,
@@ -78,7 +84,7 @@ const Marketplace = () => {
       name: "Paxta urug'i",
       price: 5500,
       unit: "kg",
-      image: "/api/placeholder/300/200",
+      image: productCottonSeeds,
       seller: "Sanjar Ismoilov",
       location: "Buxoro vil.",
       rating: 4.5,
