@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import farmHeroImage from "@/assets/farm-hero.jpg";
 import Navigation from "@/components/ui/navigation";
+import AIAssistant from "@/components/AIAssistant";
 
 const Index = () => {
   const features = [
@@ -153,6 +154,24 @@ const Index = () => {
             <Button variant="outline" className="text-lg px-8 py-4 h-auto bg-white/10 border-white/30 text-white hover:bg-white/20">
               Ko'proq Ma'lumot
             </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* AI Assistant Section */}
+      <section className="py-20 bg-muted/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">
+              🤖 AI Texnologiya
+            </Badge>
+            <h2 className="text-4xl font-bold mb-4">AI Fermer Yordamchisi</h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Qishloq xo'jaligi bo'yicha savollaringizga sun'iy intellekt orqali professional maslahat oling
+            </p>
+          </div>
+          <div className="max-w-4xl mx-auto">
+            <AIAssistant />
           </div>
         </div>
       </section>
