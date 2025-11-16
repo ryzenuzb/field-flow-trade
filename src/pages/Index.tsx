@@ -5,32 +5,39 @@ import { Badge } from "@/components/ui/badge";
 import farmHeroImage from "@/assets/farm-hero.jpg";
 import Navigation from "@/components/ui/navigation";
 import AIAssistant from "@/components/AIAssistant";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
+  const navigate = useNavigate();
+
   const features = [
     {
       icon: Sprout,
       title: "Mahsulot Savdosi",
       description: "Sifatli qishloq xo'jaligi mahsulotlarini to'g'ridan-to'g'ri fermerlardan sotib oling va soting",
-      color: "text-green-600"
+      color: "text-green-600",
+      link: "/marketplace"
     },
     {
       icon: Users,
       title: "Fermerlar Jamiyati",
       description: "Bir-biringiz bilan bog'laning, tajriba almashing va hamkorlik qiling",
-      color: "text-blue-600"
+      color: "text-blue-600",
+      link: "/chat"
     },
     {
       icon: MessageCircle,
       title: "Real-time Chat",
       description: "Xaridorlar va sotuvchilar o'rtasida tezkor muloqot va savol-javob",
-      color: "text-purple-600"
+      color: "text-purple-600",
+      link: "/chat"
     },
     {
       icon: Bot,
       title: "AI Yordamchi",
       description: "Fermerchilik bo'yicha AI maslahatchi va savdo optimizatsiyasi",
-      color: "text-orange-600"
+      color: "text-orange-600",
+      link: "#ai-assistant"
     }
   ];
 
@@ -72,11 +79,18 @@ const Index = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 slide-up">
-              <Button className="btn-farm text-lg px-8 py-4 h-auto">
+              <Button 
+                onClick={() => navigate('/auth')}
+                className="btn-farm text-lg px-8 py-4 h-auto"
+              >
                 Hoziroq Boshlash
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
-              <Button variant="outline" className="text-lg px-8 py-4 h-auto bg-white/10 border-white/30 text-white hover:bg-white/20">
+              <Button 
+                onClick={() => navigate('/marketplace')}
+                variant="outline" 
+                className="text-lg px-8 py-4 h-auto bg-white/10 border-white/30 text-white hover:bg-white/20"
+              >
                 Bozorni Ko'rish
               </Button>
             </div>
@@ -117,8 +131,20 @@ const Index = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => {
               const Icon = feature.icon;
+              const handleClick = () => {
+                if (feature.link.startsWith('#')) {
+                  document.querySelector(feature.link)?.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                  navigate(feature.link);
+                }
+              };
+              
               return (
-                <Card key={index} className="product-card text-center h-full">
+                <Card 
+                  key={index} 
+                  className="product-card text-center h-full cursor-pointer transition-transform hover:scale-105"
+                  onClick={handleClick}
+                >
                   <CardContent className="p-6">
                     <div className={`w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-primary/20 to-primary/10 flex items-center justify-center ${feature.color}`}>
                       <Icon className="w-8 h-8" />
@@ -159,7 +185,7 @@ const Index = () => {
       </section>
 
       {/* AI Assistant Section */}
-      <section className="py-20 bg-muted/30">
+      <section id="ai-assistant" className="py-20 bg-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">
