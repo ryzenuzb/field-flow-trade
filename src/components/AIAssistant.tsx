@@ -63,7 +63,7 @@ const AIAssistant = () => {
   };
 
   return (
-    <div className="flex flex-col h-[700px] bg-card rounded-lg border border-border shadow-lg">
+    <div className="flex flex-col h-[850px] bg-card rounded-lg border border-border shadow-lg">
       {/* Header */}
       <div className="bg-primary text-primary-foreground px-6 py-4 rounded-t-lg">
         <div className="flex items-center gap-3">
@@ -141,7 +141,7 @@ const AIAssistant = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Savolingizni yozing..."
-            className="min-h-[100px] resize-none text-base"
+            className="min-h-[140px] resize-none text-base"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
