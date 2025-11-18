@@ -68,7 +68,7 @@ Har doim do'stona, professional va yordam berishga tayyor bo'ling!`
           }
         ],
         temperature: 0.7,
-        max_tokens: 1500,
+        max_tokens: 4000,
       }),
     });
 
