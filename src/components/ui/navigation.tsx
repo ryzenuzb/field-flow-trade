@@ -10,8 +10,7 @@ import {
   Bot, 
   User, 
   Menu,
-  Home,
-  Heart
+  Home
 } from "lucide-react";
 
 const Navigation = () => {
@@ -23,7 +22,6 @@ const Navigation = () => {
     { name: "Bozor", href: "/marketplace", icon: ShoppingCart },
     { name: "Chat", href: "/chat", icon: MessageCircle },
     { name: "AI Maslahatchi", href: "/ai-assistant", icon: Bot },
-    { name: "Sevimlilar", href: "/favorites", icon: Heart },
     { name: "Profil", href: "/profile", icon: User },
   ];
 
