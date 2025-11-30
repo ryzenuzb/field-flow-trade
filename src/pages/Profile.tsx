@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navigation from "@/components/ui/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,8 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Mail, Phone, MapPin, Save, Edit } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { User, Mail, Phone, MapPin, Save, Edit, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Profile = () => {
   const { toast } = useToast();
@@ -19,6 +22,50 @@ const Profile = () => {
     location: "Toshkent, O'zbekiston",
     bio: "Men fermer va organik mahsulotlar yetkazib beruvchisiman. 10 yildan ortiq tajribam bor."
   });
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          products (
+            title,
+            price,
+            unit,
+            image_url
+          )
+        `)
+        .eq('buyer_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      setOrders(data || []);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      toast({
+        title: "Xatolik",
+        description: "Buyurtmalarni yuklashda xatolik yuz berdi",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSave = () => {
     setIsEditing(false);
@@ -158,7 +205,7 @@ const Profile = () => {
                 <p className="text-sm text-muted-foreground">Mahsulotlar</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-primary">156</p>
+                <p className="text-2xl font-bold text-primary">{orders.length}</p>
                 <p className="text-sm text-muted-foreground">Buyurtmalar</p>
               </div>
               <div className="text-center">
@@ -166,6 +213,80 @@ const Profile = () => {
                 <p className="text-sm text-muted-foreground">Reyting</p>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Orders History */}
+        <Card className="mt-6">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Package className="w-5 h-5" />
+              <CardTitle>Buyurtmalar tarixi</CardTitle>
+            </div>
+            <CardDescription>
+              Sizning barcha buyurtmalaringiz
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Yuklanmoqda...
+              </div>
+            ) : orders.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Hozircha buyurtmalar yo'q
+              </div>
+            ) : (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Mahsulot</TableHead>
+                      <TableHead>Miqdor</TableHead>
+                      <TableHead>Narx</TableHead>
+                      <TableHead>Holat</TableHead>
+                      <TableHead>Sana</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {orders.map((order) => (
+                      <TableRow key={order.id}>
+                        <TableCell className="font-medium">
+                          {order.products?.title || "Noma'lum mahsulot"}
+                        </TableCell>
+                        <TableCell>
+                          {order.quantity} {order.products?.unit || "dona"}
+                        </TableCell>
+                        <TableCell>
+                          {order.total_price.toLocaleString('uz-UZ')} so'm
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              order.status === "completed"
+                                ? "default"
+                                : order.status === "pending"
+                                ? "secondary"
+                                : order.status === "cancelled"
+                                ? "destructive"
+                                : "outline"
+                            }
+                          >
+                            {order.status === "pending" && "Kutilmoqda"}
+                            {order.status === "confirmed" && "Tasdiqlandi"}
+                            {order.status === "completed" && "Bajarildi"}
+                            {order.status === "cancelled" && "Bekor qilindi"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(order.created_at).toLocaleDateString('uz-UZ')}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
