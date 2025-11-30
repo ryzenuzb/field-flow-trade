@@ -1,9 +1,13 @@
-import { useState } from "react";
-import { Search, Filter, SlidersHorizontal } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Filter, SlidersHorizontal, ShoppingBag } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import ProductCard from "@/components/ui/product-card";
 import productTomato from "@/assets/product-tomato.jpg";
 import productWheat from "@/assets/product-wheat.jpg";
@@ -33,9 +37,24 @@ import productNuts from "@/assets/product-nuts.jpg";
 import productCabbage from "@/assets/product-cabbage.jpg";
 
 const Marketplace = () => {
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("recent");
+  const [orderDialogOpen, setOrderDialogOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [isOrdering, setIsOrdering] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setIsAuthenticated(!!user);
+  };
 
   // Mock data for products
   const products = [
@@ -110,7 +129,58 @@ const Marketplace = () => {
   };
 
   const handleAddToCart = (id: string) => {
-    console.log("Add to cart:", id);
+    if (!isAuthenticated) {
+      toast({
+        title: "Tizimga kiring",
+        description: "Buyurtma berish uchun tizimga kirishingiz kerak",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const product = products.find(p => p.id === id);
+    if (product) {
+      setSelectedProduct(product);
+      setQuantity(1);
+      setOrderDialogOpen(true);
+    }
+  };
+
+  const handlePlaceOrder = async () => {
+    if (!selectedProduct || !isAuthenticated) return;
+
+    setIsOrdering(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Xatolik",
+          description: "Foydalanuvchi topilmadi",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // For now, we'll just show a success message since products are mock data
+      // In real implementation, this would call the create-order edge function
+      toast({
+        title: "Buyurtma qabul qilindi!",
+        description: `${selectedProduct.name} uchun buyurtmangiz qabul qilindi`,
+      });
+
+      setOrderDialogOpen(false);
+      setSelectedProduct(null);
+    } catch (error) {
+      console.error('Order error:', error);
+      toast({
+        title: "Xatolik",
+        description: "Buyurtma berishda xatolik yuz berdi",
+        variant: "destructive",
+      });
+    } finally {
+      setIsOrdering(false);
+    }
   };
 
   return (
@@ -205,6 +275,100 @@ const Marketplace = () => {
           </Button>
         </div>
       </div>
+
+      {/* Order Dialog */}
+      <Dialog open={orderDialogOpen} onOpenChange={setOrderDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShoppingBag className="w-5 h-5" />
+              Buyurtma berish
+            </DialogTitle>
+            <DialogDescription>
+              Buyurtma ma'lumotlarini tasdiqlang
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedProduct && (
+            <div className="space-y-6 py-4">
+              {/* Product Info */}
+              <div className="flex gap-4">
+                <img
+                  src={selectedProduct.image}
+                  alt={selectedProduct.name}
+                  className="w-24 h-24 object-cover rounded-lg"
+                />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg">{selectedProduct.name}</h3>
+                  <p className="text-sm text-muted-foreground">{selectedProduct.seller}</p>
+                  <p className="text-lg font-bold text-primary mt-1">
+                    {selectedProduct.price.toLocaleString()} so'm/{selectedProduct.unit}
+                  </p>
+                </div>
+              </div>
+
+              {/* Quantity */}
+              <div className="space-y-2">
+                <Label htmlFor="quantity">Miqdor ({selectedProduct.unit})</Label>
+                <div className="flex items-center gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    disabled={quantity <= 1}
+                  >
+                    -
+                  </Button>
+                  <Input
+                    id="quantity"
+                    type="number"
+                    min="1"
+                    value={quantity}
+                    onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="text-center w-24"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setQuantity(quantity + 1)}
+                  >
+                    +
+                  </Button>
+                </div>
+              </div>
+
+              {/* Total */}
+              <div className="bg-muted/50 rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Jami:</span>
+                  <span className="text-2xl font-bold text-primary">
+                    {(selectedProduct.price * quantity).toLocaleString()} so'm
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setOrderDialogOpen(false)}
+              disabled={isOrdering}
+            >
+              Bekor qilish
+            </Button>
+            <Button
+              onClick={handlePlaceOrder}
+              disabled={isOrdering}
+              className="btn-farm"
+            >
+              {isOrdering ? "Yuborilmoqda..." : "Buyurtma berish"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
