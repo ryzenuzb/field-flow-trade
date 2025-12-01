@@ -10,7 +10,8 @@ import {
   Bot, 
   User, 
   Menu,
-  Home
+  Home,
+  Tractor
 } from "lucide-react";
 
 const Navigation = () => {
@@ -20,6 +21,7 @@ const Navigation = () => {
   const navItems = [
     { name: "Bosh sahifa", href: "/", icon: Home },
     { name: "Bozor", href: "/marketplace", icon: ShoppingCart },
+    { name: "Fermer Paneli", href: "/farmer", icon: Tractor },
     { name: "Chat", href: "/chat", icon: MessageCircle },
     { name: "AI Maslahatchi", href: "/ai-assistant", icon: Bot },
     { name: "Profil", href: "/profile", icon: User },
