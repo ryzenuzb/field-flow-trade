@@ -45,11 +45,14 @@ const Auth = () => {
           .update({ phone, location })
           .eq("user_id", data.user.id);
 
-        // If farmer, add farmer role
+        // If farmer, add farmer role using secure database function
         if (isFarmer) {
-          await supabase
-            .from("user_roles")
-            .insert({ user_id: data.user.id, role: "farmer" });
+          const { error: roleError } = await supabase.rpc("assign_farmer_role", {
+            user_id_param: data.user.id,
+          });
+          if (roleError) {
+            console.error("Error assigning farmer role:", roleError);
+          }
         }
 
         toast({
