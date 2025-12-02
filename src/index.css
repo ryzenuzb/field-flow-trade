@@ -57,6 +57,11 @@
 
     --radius: 0.5rem;
 
+    /* Farm colors */
+    --farm: 142 70% 45%;
+    --farm-dark: 142 80% 35%;
+    --farm-light: 142 60% 55%;
+
     --sidebar-background: 0 0% 98%;
 
     --sidebar-foreground: 240 5.3% 26.1%;
