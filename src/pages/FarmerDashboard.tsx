@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Package, ShoppingCart, TrendingUp, DollarSign } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Plus, Edit, Trash2, Package, ShoppingCart, TrendingUp, DollarSign, Upload, Image as ImageIcon, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -47,6 +47,10 @@ const FarmerDashboard = () => {
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -167,6 +171,7 @@ const FarmerDashboard = () => {
         stock_quantity: product.stock_quantity?.toString() || "",
         location: product.location || "",
       });
+      setImagePreview(product.image_url || null);
     } else {
       setEditingProduct(null);
       setFormData({
@@ -178,8 +183,60 @@ const FarmerDashboard = () => {
         stock_quantity: "",
         location: "",
       });
+      setImagePreview(null);
     }
+    setImageFile(null);
     setProductDialogOpen(true);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Xatolik",
+          description: "Rasm hajmi 5MB dan oshmasligi kerak",
+          variant: "destructive",
+        });
+        return;
+      }
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userId}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(fileName);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Rasm yuklashda xatolik:', error);
+      return null;
+    }
   };
 
   const handleSaveProduct = async () => {
@@ -193,6 +250,21 @@ const FarmerDashboard = () => {
     }
 
     try {
+      setUploading(true);
+      
+      let imageUrl = editingProduct?.image_url || null;
+      
+      // Upload new image if selected
+      if (imageFile) {
+        const uploadedUrl = await uploadImage(imageFile);
+        if (uploadedUrl) {
+          imageUrl = uploadedUrl;
+        }
+      } else if (!imagePreview && editingProduct?.image_url) {
+        // Image was removed
+        imageUrl = null;
+      }
+
       const productData = {
         title: formData.title,
         description: formData.description || null,
@@ -203,6 +275,7 @@ const FarmerDashboard = () => {
         location: formData.location || null,
         seller_id: userId,
         is_active: true,
+        image_url: imageUrl,
       };
 
       if (editingProduct) {
@@ -231,6 +304,8 @@ const FarmerDashboard = () => {
       }
 
       setProductDialogOpen(false);
+      setImageFile(null);
+      setImagePreview(null);
       fetchProducts();
     } catch (error: any) {
       console.error('Mahsulotni saqlashda xatolik:', error);
@@ -239,6 +314,8 @@ const FarmerDashboard = () => {
         description: error.message || "Mahsulotni saqlashda xatolik yuz berdi",
         variant: "destructive",
       });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -569,6 +646,45 @@ const FarmerDashboard = () => {
                 placeholder="Toshkent vil."
               />
             </div>
+
+            <div className="grid gap-2">
+              <Label>Mahsulot rasmi</Label>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImageChange}
+                accept="image/*"
+                className="hidden"
+              />
+              
+              {imagePreview ? (
+                <div className="relative w-full h-48 rounded-lg overflow-hidden border border-border">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2"
+                    onClick={removeImage}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full h-48 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
+                >
+                  <Upload className="w-8 h-8 text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">Rasm yuklash uchun bosing</p>
+                  <p className="text-xs text-muted-foreground mt-1">PNG, JPG, max 5MB</p>
+                </div>
+              )}
+            </div>
           </div>
 
           <DialogFooter>
@@ -578,8 +694,8 @@ const FarmerDashboard = () => {
             >
               Bekor qilish
             </Button>
-            <Button onClick={handleSaveProduct} className="btn-farm">
-              {editingProduct ? "Saqlash" : "Qo'shish"}
+            <Button onClick={handleSaveProduct} className="btn-farm" disabled={uploading}>
+              {uploading ? "Yuklanmoqda..." : (editingProduct ? "Saqlash" : "Qo'shish")}
             </Button>
           </DialogFooter>
         </DialogContent>
