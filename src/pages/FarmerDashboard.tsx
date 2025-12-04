@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Plus, Edit, Trash2, Package, ShoppingCart, TrendingUp, DollarSign, Upload, X, Check, XCircle } from "lucide-react";
+import { Plus, Edit, Trash2, Package, ShoppingCart, TrendingUp, DollarSign, Upload, X, Check, XCircle, Truck, PackageCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -167,9 +167,16 @@ const FarmerDashboard = () => {
 
       if (error) throw error;
 
+      const statusMessages: Record<string, string> = {
+        processing: "Buyurtma qabul qilindi",
+        shipped: "Buyurtma yuborildi",
+        delivered: "Buyurtma yetkazildi",
+        cancelled: "Buyurtma rad etildi",
+      };
+      
       toast({
         title: "Muvaffaqiyatli!",
-        description: status === 'processing' ? "Buyurtma qabul qilindi" : "Buyurtma rad etildi",
+        description: statusMessages[status] || "Buyurtma holati yangilandi",
       });
       
       fetchOrders();
@@ -592,6 +599,28 @@ const FarmerDashboard = () => {
                               Rad
                             </Button>
                           </div>
+                        )}
+                        {order.status === 'processing' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                            onClick={() => updateOrderStatus(order.id, 'shipped')}
+                          >
+                            <Truck className="w-4 h-4 mr-1" />
+                            Yuborildi
+                          </Button>
+                        )}
+                        {order.status === 'shipped' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                            onClick={() => updateOrderStatus(order.id, 'delivered')}
+                          >
+                            <PackageCheck className="w-4 h-4 mr-1" />
+                            Yetkazildi
+                          </Button>
                         )}
                       </TableCell>
                     </TableRow>
