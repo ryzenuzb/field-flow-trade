@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Plus, Edit, Trash2, Package, ShoppingCart, TrendingUp, DollarSign, Upload, Image as ImageIcon, X } from "lucide-react";
+import { Plus, Edit, Trash2, Package, ShoppingCart, TrendingUp, DollarSign, Upload, X, Check, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -156,6 +156,47 @@ const FarmerDashboard = () => {
       setOrders(data || []);
     } catch (error) {
       console.error('Buyurtmalarni yuklashda xatolik:', error);
+    }
+  };
+
+  const updateOrderStatus = async (orderId: string, status: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('update-order-status', {
+        body: { order_id: orderId, status }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Muvaffaqiyatli!",
+        description: status === 'processing' ? "Buyurtma qabul qilindi" : "Buyurtma rad etildi",
+      });
+      
+      fetchOrders();
+    } catch (error: any) {
+      console.error('Buyurtma holatini yangilashda xatolik:', error);
+      toast({
+        title: "Xatolik",
+        description: error.message || "Buyurtma holatini yangilashda xatolik yuz berdi",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getStatusBadge = (status: string | null) => {
+    switch (status) {
+      case 'pending':
+        return <Badge variant="secondary">Kutilmoqda</Badge>;
+      case 'processing':
+        return <Badge className="bg-blue-500 hover:bg-blue-600">Qabul qilindi</Badge>;
+      case 'shipped':
+        return <Badge className="bg-purple-500 hover:bg-purple-600">Yuborildi</Badge>;
+      case 'delivered':
+        return <Badge className="bg-green-500 hover:bg-green-600">Yetkazildi</Badge>;
+      case 'cancelled':
+        return <Badge variant="destructive">Rad etildi</Badge>;
+      default:
+        return <Badge variant="secondary">{status || 'Noma\'lum'}</Badge>;
     }
   };
 
@@ -511,12 +552,13 @@ const FarmerDashboard = () => {
                   <TableHead>Jami narx</TableHead>
                   <TableHead>Holat</TableHead>
                   <TableHead>Sana</TableHead>
+                  <TableHead>Amallar</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {orders.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">
                       Hozircha buyurtmalar yo'q
                     </TableCell>
                   </TableRow>
@@ -526,12 +568,32 @@ const FarmerDashboard = () => {
                       <TableCell className="font-medium">{order.products.title}</TableCell>
                       <TableCell>{order.quantity} {order.products.unit}</TableCell>
                       <TableCell>{order.total_price.toLocaleString()} so'm</TableCell>
-                      <TableCell>
-                        <Badge variant={order.status === 'pending' ? "secondary" : "default"}>
-                          {order.status === 'pending' ? 'Kutilmoqda' : order.status}
-                        </Badge>
-                      </TableCell>
+                      <TableCell>{getStatusBadge(order.status)}</TableCell>
                       <TableCell>{new Date(order.created_at).toLocaleDateString('uz-UZ')}</TableCell>
+                      <TableCell>
+                        {order.status === 'pending' && (
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                              onClick={() => updateOrderStatus(order.id, 'processing')}
+                            >
+                              <Check className="w-4 h-4 mr-1" />
+                              Qabul
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => updateOrderStatus(order.id, 'cancelled')}
+                            >
+                              <XCircle className="w-4 h-4 mr-1" />
+                              Rad
+                            </Button>
+                          </div>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
