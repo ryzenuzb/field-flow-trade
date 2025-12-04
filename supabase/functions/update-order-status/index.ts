@@ -22,6 +22,12 @@ serve(async (req) => {
       }
     );
 
+    // Service role client for fetching user email
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
       throw new Error('Unauthorized');
@@ -35,16 +41,18 @@ serve(async (req) => {
       throw new Error('Invalid status');
     }
 
-    // Get order details
+    // Get order details with product info
     const { data: order, error: orderError } = await supabaseClient
       .from('orders')
-      .select('*, products(seller_id)')
+      .select('*, products(seller_id, title)')
       .eq('id', order_id)
       .single();
 
     if (orderError || !order) {
       throw new Error('Order not found');
     }
+
+    const oldStatus = order.status;
 
     // Check if user has permission (seller, admin, or buyer cancelling)
     const { data: hasAdminRole } = await supabaseClient
@@ -69,6 +77,52 @@ serve(async (req) => {
     if (updateError) throw updateError;
 
     console.log(`Order ${order_id} status updated to ${status} by user ${user.id}`);
+
+    // Send email notification if status changed
+    if (oldStatus !== status) {
+      try {
+        // Get buyer info
+        const { data: buyerProfile } = await supabaseClient
+          .from('profiles')
+          .select('full_name')
+          .eq('user_id', order.buyer_id)
+          .single();
+
+        // Get buyer email from auth.users
+        const { data: buyerAuth } = await supabaseAdmin.auth.admin.getUserById(order.buyer_id);
+
+        if (buyerAuth?.user?.email) {
+          const emailPayload = {
+            order_id: order_id,
+            new_status: status,
+            buyer_email: buyerAuth.user.email,
+            buyer_name: buyerProfile?.full_name || 'Foydalanuvchi',
+            product_title: order.products.title,
+            quantity: order.quantity,
+            total_price: order.total_price
+          };
+
+          // Call email notification function
+          const emailResponse = await fetch(
+            `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-order-notification`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`
+              },
+              body: JSON.stringify(emailPayload)
+            }
+          );
+
+          const emailResult = await emailResponse.json();
+          console.log('Email notification result:', emailResult);
+        }
+      } catch (emailError) {
+        console.error('Error sending email notification:', emailError);
+        // Don't fail the main request if email fails
+      }
+    }
 
     return new Response(
       JSON.stringify({ success: true, order: updatedOrder }),
