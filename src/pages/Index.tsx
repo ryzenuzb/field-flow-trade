@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import farmHeroImage from "@/assets/farm-hero.jpg";
 import Navigation from "@/components/ui/navigation";
 import AIAssistant from "@/components/AIAssistant";
+import { WeatherWidget } from "@/components/WeatherWidget";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
@@ -112,6 +113,26 @@ const Index = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Weather Section */}
+      <section className="py-12 bg-gradient-to-b from-white to-blue-50 dark:from-background dark:to-blue-950/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8">
+            <Badge className="mb-4 bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-700">
+              ☀️ Ob-havo Ma'lumotlari
+            </Badge>
+            <h2 className="text-3xl lg:text-4xl font-poppins font-bold text-foreground mb-4">
+              Hududingiz <span className="text-blue-600 dark:text-blue-400">Ob-havosi</span>
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Fermerchilik rejalaringizni ob-havo prognoziga moslang
+            </p>
+          </div>
+          <div className="max-w-4xl mx-auto">
+            <WeatherWidget />
           </div>
         </div>
       </section>
