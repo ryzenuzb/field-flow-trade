@@ -1,19 +1,31 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/ui/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Package, 
   Calendar, 
   MapPin, 
-  User,
   ArrowLeft,
-  ShoppingBag
+  ShoppingBag,
+  X,
+  Loader2
 } from "lucide-react";
 
 interface Order {
@@ -35,6 +47,7 @@ interface Order {
 const OrderHistory = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -106,6 +119,49 @@ const OrderHistory = () => {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    setCancellingOrderId(orderId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast({
+          title: "Xatolik",
+          description: "Iltimos, tizimga kiring",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke("update-order-status", {
+        body: { order_id: orderId, status: "cancelled" },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Muvaffaqiyat",
+        description: "Buyurtma bekor qilindi",
+      });
+
+      // Update local state
+      setOrders((prev) =>
+        prev.map((order) =>
+          order.id === orderId ? { ...order, status: "cancelled" } : order
+        )
+      );
+    } catch (error) {
+      console.error("Error cancelling order:", error);
+      toast({
+        title: "Xatolik",
+        description: "Buyurtmani bekor qilishda xatolik yuz berdi",
+        variant: "destructive",
+      });
+    } finally {
+      setCancellingOrderId(null);
+    }
   };
 
   return (
@@ -232,6 +288,50 @@ const OrderHistory = () => {
                           </div>
                         )}
                       </div>
+
+                      {/* Cancel button for pending orders */}
+                      {order.status === "pending" && (
+                        <div className="mt-4 pt-4 border-t border-border">
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button 
+                                variant="destructive" 
+                                size="sm"
+                                disabled={cancellingOrderId === order.id}
+                              >
+                                {cancellingOrderId === order.id ? (
+                                  <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Bekor qilinmoqda...
+                                  </>
+                                ) : (
+                                  <>
+                                    <X className="w-4 h-4 mr-2" />
+                                    Bekor qilish
+                                  </>
+                                )}
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Buyurtmani bekor qilish</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Haqiqatan ham bu buyurtmani bekor qilmoqchimisiz? Bu amalni qaytarib bo'lmaydi.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Yo'q</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleCancelOrder(order.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Ha, bekor qilish
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>
