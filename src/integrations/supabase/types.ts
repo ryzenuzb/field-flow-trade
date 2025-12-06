@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      crop_events: {
+        Row: {
+          created_at: string
+          crop_name: string
+          event_date: string
+          event_type: string
+          id: string
+          notes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          crop_name: string
+          event_date: string
+          event_type: string
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          crop_name?: string
+          event_date?: string
+          event_type?: string
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
