@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { WeatherWidget } from "@/components/WeatherWidget";
+import { CropCalendar } from "@/components/CropCalendar";
 
 interface Product {
   id: string;
@@ -424,6 +425,11 @@ const FarmerDashboard = () => {
         {/* Weather Widget */}
         <div className="mb-8">
           <WeatherWidget />
+        </div>
+
+        {/* Crop Calendar */}
+        <div className="mb-8">
+          <CropCalendar />
         </div>
         {/* Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
