@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Search, Filter, SlidersHorizontal, ShoppingBag, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ interface Product {
 
 const Marketplace = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("recent");
@@ -36,13 +38,31 @@ const Marketplace = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    checkAuth();
+    checkAuthAndRole();
     fetchProducts();
   }, []);
 
-  const checkAuth = async () => {
+  const checkAuthAndRole = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    setIsAuthenticated(!!user);
+    if (user) {
+      setIsAuthenticated(true);
+      
+      // Check if user is a farmer
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+      
+      if (roles && roles.some(r => r.role === 'farmer')) {
+        toast({
+          title: "Ruxsat yo'q",
+          description: "Fermerlar bozorga kira olmaydi",
+          variant: "destructive",
+        });
+        navigate('/farmer');
+        return;
+      }
+    }
   };
 
   const fetchProducts = async () => {
