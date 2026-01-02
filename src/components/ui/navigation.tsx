@@ -50,17 +50,21 @@ const Navigation = () => {
   };
 
   const allNavItems = [
-    { name: "Bosh sahifa", href: "/", icon: Home, farmerAllowed: true },
-    { name: "Bozor", href: "/marketplace", icon: ShoppingCart, farmerAllowed: false },
-    { name: "Buyurtmalar", href: "/orders", icon: ClipboardList, farmerAllowed: false },
-    { name: "Fermer Paneli", href: "/farmer", icon: Tractor, farmerAllowed: true },
-    { name: "Chat", href: "/chat", icon: MessageCircle, farmerAllowed: true },
-    { name: "Profil", href: "/profile", icon: User, farmerAllowed: false },
+    { name: "Bosh sahifa", href: "/", icon: Home, farmerAllowed: true, requiresAuth: false },
+    { name: "Bozor", href: "/marketplace", icon: ShoppingCart, farmerAllowed: false, requiresAuth: false },
+    { name: "Buyurtmalar", href: "/orders", icon: ClipboardList, farmerAllowed: false, requiresAuth: true },
+    { name: "Fermer Paneli", href: "/farmer", icon: Tractor, farmerAllowed: true, requiresAuth: true },
+    { name: "Chat", href: "/chat", icon: MessageCircle, farmerAllowed: true, requiresAuth: true },
+    { name: "Profil", href: "/profile", icon: User, farmerAllowed: false, requiresAuth: true },
   ];
 
-  const navItems = isFarmer 
-    ? allNavItems.filter(item => item.farmerAllowed)
-    : allNavItems;
+  const navItems = allNavItems.filter(item => {
+    // Hide items that require auth if user is not authenticated
+    if (item.requiresAuth && !isAuthenticated) return false;
+    // Hide items not allowed for farmers
+    if (isFarmer && !item.farmerAllowed) return false;
+    return true;
+  });
 
   const isActive = (path: string) => location.pathname === path;
 
