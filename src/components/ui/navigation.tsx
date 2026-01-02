@@ -1,32 +1,66 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Sprout, 
   ShoppingCart, 
   MessageCircle, 
-  Bot, 
   User, 
   Menu,
   Home,
   Tractor,
-  ClipboardList
+  ClipboardList,
+  LogOut
 } from "lucide-react";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isFarmer, setIsFarmer] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
-  const navItems = [
-    { name: "Bosh sahifa", href: "/", icon: Home },
-    { name: "Bozor", href: "/marketplace", icon: ShoppingCart },
-    { name: "Buyurtmalar", href: "/orders", icon: ClipboardList },
-    { name: "Fermer Paneli", href: "/farmer", icon: Tractor },
-    { name: "Chat", href: "/chat", icon: MessageCircle },
-    { name: "Profil", href: "/profile", icon: User },
+  useEffect(() => {
+    checkUserRole();
+  }, []);
+
+  const checkUserRole = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      setIsAuthenticated(true);
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+      
+      if (roles && roles.some(r => r.role === 'farmer')) {
+        setIsFarmer(true);
+      }
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIsAuthenticated(false);
+    setIsFarmer(false);
+    navigate('/');
+  };
+
+  const allNavItems = [
+    { name: "Bosh sahifa", href: "/", icon: Home, farmerAllowed: true },
+    { name: "Bozor", href: "/marketplace", icon: ShoppingCart, farmerAllowed: false },
+    { name: "Buyurtmalar", href: "/orders", icon: ClipboardList, farmerAllowed: false },
+    { name: "Fermer Paneli", href: "/farmer", icon: Tractor, farmerAllowed: true },
+    { name: "Chat", href: "/chat", icon: MessageCircle, farmerAllowed: true },
+    { name: "Profil", href: "/profile", icon: User, farmerAllowed: false },
   ];
+
+  const navItems = isFarmer 
+    ? allNavItems.filter(item => item.farmerAllowed)
+    : allNavItems;
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -67,19 +101,30 @@ const Navigation = () => {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-3">
-            <Badge variant="secondary" className="bg-accent text-accent-foreground">
-              Fermer
-            </Badge>
-            <Link to="/auth">
-              <Button variant="outline" size="sm">
-                Kirish
+            {isFarmer && (
+              <Badge variant="secondary" className="bg-accent text-accent-foreground">
+                Fermer
+              </Badge>
+            )}
+            {isAuthenticated ? (
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Chiqish
               </Button>
-            </Link>
-            <Link to="/auth">
-              <Button className="btn-farm" size="sm">
-                Ro'yxatdan o'tish
-              </Button>
-            </Link>
+            ) : (
+              <>
+                <Link to="/auth">
+                  <Button variant="outline" size="sm">
+                    Kirish
+                  </Button>
+                </Link>
+                <Link to="/auth">
+                  <Button className="btn-farm" size="sm">
+                    Ro'yxatdan o'tish
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile menu trigger */}
@@ -124,16 +169,25 @@ const Navigation = () => {
                 })}
                 
                 <div className="pt-6 border-t border-border space-y-3">
-                  <Link to="/auth" onClick={() => setIsOpen(false)}>
-                    <Button variant="outline" className="w-full">
-                      Kirish
+                  {isAuthenticated ? (
+                    <Button variant="outline" className="w-full" onClick={() => { handleLogout(); setIsOpen(false); }}>
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Chiqish
                     </Button>
-                  </Link>
-                  <Link to="/auth" onClick={() => setIsOpen(false)}>
-                    <Button className="btn-farm w-full">
-                      Ro'yxatdan o'tish
-                    </Button>
-                  </Link>
+                  ) : (
+                    <>
+                      <Link to="/auth" onClick={() => setIsOpen(false)}>
+                        <Button variant="outline" className="w-full">
+                          Kirish
+                        </Button>
+                      </Link>
+                      <Link to="/auth" onClick={() => setIsOpen(false)}>
+                        <Button className="btn-farm w-full">
+                          Ro'yxatdan o'tish
+                        </Button>
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
             </SheetContent>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/ui/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const Profile = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "Alisher Karimov",
@@ -26,18 +28,38 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchOrders();
+    checkAuthAndRole();
   }, []);
 
-  const fetchOrders = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        setLoading(false);
-        return;
-      }
+  const checkAuthAndRole = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
 
+    // Check if user is a farmer
+    const { data: roles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id);
+    
+    if (roles && roles.some(r => r.role === 'farmer')) {
+      toast({
+        title: "Ruxsat yo'q",
+        description: "Fermerlar profil sahifasiga kira olmaydi",
+        variant: "destructive",
+      });
+      navigate('/farmer');
+      return;
+    }
+
+    fetchOrders(user.id);
+  };
+
+  const fetchOrders = async (userId: string) => {
+    try {
       const { data, error } = await supabase
         .from('orders')
         .select(`
@@ -49,7 +71,7 @@ const Profile = () => {
             image_url
           )
         `)
-        .eq('buyer_id', user.id)
+        .eq('buyer_id', userId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

@@ -52,18 +52,38 @@ const OrderHistory = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchOrders();
+    checkAuthAndRole();
   }, []);
 
-  const fetchOrders = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        navigate("/auth");
-        return;
-      }
+  const checkAuthAndRole = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
 
+    // Check if user is a farmer
+    const { data: roles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id);
+    
+    if (roles && roles.some(r => r.role === 'farmer')) {
+      toast({
+        title: "Ruxsat yo'q",
+        description: "Fermerlar buyurtmalar sahifasiga kira olmaydi",
+        variant: "destructive",
+      });
+      navigate('/farmer');
+      return;
+    }
+
+    fetchOrders(user.id);
+  };
+
+  const fetchOrders = async (userId: string) => {
+    try {
       const { data, error } = await supabase
         .from("orders")
         .select(`
@@ -81,7 +101,7 @@ const OrderHistory = () => {
             seller_id
           )
         `)
-        .eq("buyer_id", user.id)
+        .eq("buyer_id", userId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
