@@ -184,28 +184,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-primary to-primary-light">
-        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl lg:text-5xl font-poppins font-bold text-white mb-6">
-            Fermerchilikda Yangi Imkoniyatlar
-          </h2>
-          <p className="text-xl text-green-100 mb-8">
-            Minglab fermerlar allaqachon FarmTrade orqali o'z bizneslarini rivojlantirishmoqda. 
-            Siz ham qo'shiling!
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button className="btn-earth text-lg px-8 py-4 h-auto">
-              Ro'yxatdan O'tish
-            </Button>
-            <Button variant="outline" className="text-lg px-8 py-4 h-auto bg-white/10 border-white/30 text-white hover:bg-white/20">
-              Ko'proq Ma'lumot
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* AI Assistant Section */}
+      {/* AI Assistant Section - Moved to bottom before footer */}
       <section id="ai-assistant" className="py-20 bg-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
@@ -219,6 +198,27 @@ const Index = () => {
           </div>
           <div className="max-w-4xl mx-auto">
             <AIAssistant />
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-gradient-to-r from-primary to-primary-light">
+        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+          <h2 className="text-4xl lg:text-5xl font-poppins font-bold text-white mb-6">
+            Fermerchilikda Yangi Imkoniyatlar
+          </h2>
+          <p className="text-xl text-green-100 mb-8">
+            Minglab fermerlar allaqachon FarmTrade orqali o'z bizneslarini rivojlantirishmoqda. 
+            Siz ham qo'shiling!
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button onClick={() => navigate('/auth')} className="btn-earth text-lg px-8 py-4 h-auto">
+              Ro'yxatdan O'tish
+            </Button>
+            <Button onClick={() => navigate('/marketplace')} variant="outline" className="text-lg px-8 py-4 h-auto bg-white/10 border-white/30 text-white hover:bg-white/20">
+              Bozorni Ko'rish
+            </Button>
           </div>
         </div>
       </section>
