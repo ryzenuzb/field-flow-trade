@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          changed_at: string | null
+          changed_by: string | null
+          id: string
+          ip_address: string | null
+          new_data: Json | null
+          old_data: Json | null
+          record_id: string
+          table_name: string
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          ip_address?: string | null
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id: string
+          table_name: string
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          ip_address?: string | null
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string
+          table_name?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       crop_events: {
         Row: {
           created_at: string
@@ -47,6 +86,47 @@ export type Database = {
         }
         Relationships: []
       }
+      escrow_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          held_at: string | null
+          id: string
+          order_id: string
+          refunded_at: string | null
+          released_at: string | null
+          status: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          held_at?: string | null
+          id?: string
+          order_id: string
+          refunded_at?: string | null
+          released_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          held_at?: string | null
+          id?: string
+          order_id?: string
+          refunded_at?: string | null
+          released_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escrow_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
@@ -70,31 +150,55 @@ export type Database = {
       }
       orders: {
         Row: {
+          accepted_at: string | null
           buyer_id: string
+          cancel_reason: string | null
+          cancelled_at: string | null
           created_at: string
+          delivered_at: string | null
+          dispute_reason: string | null
+          escrow_released: boolean | null
           id: string
           product_id: string
           quantity: number
+          seller_id: string | null
+          shipped_at: string | null
           status: string | null
           total_price: number
           updated_at: string
         }
         Insert: {
+          accepted_at?: string | null
           buyer_id: string
+          cancel_reason?: string | null
+          cancelled_at?: string | null
           created_at?: string
+          delivered_at?: string | null
+          dispute_reason?: string | null
+          escrow_released?: boolean | null
           id?: string
           product_id: string
           quantity: number
+          seller_id?: string | null
+          shipped_at?: string | null
           status?: string | null
           total_price: number
           updated_at?: string
         }
         Update: {
+          accepted_at?: string | null
           buyer_id?: string
+          cancel_reason?: string | null
+          cancelled_at?: string | null
           created_at?: string
+          delivered_at?: string | null
+          dispute_reason?: string | null
+          escrow_released?: boolean | null
           id?: string
           product_id?: string
           quantity?: number
+          seller_id?: string | null
+          shipped_at?: string | null
           status?: string | null
           total_price?: number
           updated_at?: string
@@ -109,10 +213,47 @@ export type Database = {
           },
         ]
       }
+      product_history: {
+        Row: {
+          changed_at: string | null
+          changed_by: string | null
+          data: Json
+          id: string
+          product_id: string | null
+          version: number
+        }
+        Insert: {
+          changed_at?: string | null
+          changed_by?: string | null
+          data: Json
+          id?: string
+          product_id?: string | null
+          version: number
+        }
+        Update: {
+          changed_at?: string | null
+          changed_by?: string | null
+          data?: Json
+          id?: string
+          product_id?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category: string
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           description: string | null
           id: string
           image_url: string | null
@@ -124,10 +265,13 @@ export type Database = {
           title: string
           unit: string
           updated_at: string
+          version: number | null
         }
         Insert: {
           category: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           id?: string
           image_url?: string | null
@@ -139,10 +283,13 @@ export type Database = {
           title: string
           unit: string
           updated_at?: string
+          version?: number | null
         }
         Update: {
           category?: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           id?: string
           image_url?: string | null
@@ -154,6 +301,7 @@ export type Database = {
           title?: string
           unit?: string
           updated_at?: string
+          version?: number | null
         }
         Relationships: []
       }
@@ -187,6 +335,36 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          action: string
+          count: number | null
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          user_id: string | null
+          window_start: string | null
+        }
+        Insert: {
+          action: string
+          count?: number | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          user_id?: string | null
+          window_start?: string | null
+        }
+        Update: {
+          action?: string
+          count?: number | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          user_id?: string | null
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -216,6 +394,15 @@ export type Database = {
       assign_farmer_role: {
         Args: { user_id_param: string }
         Returns: undefined
+      }
+      check_rate_limit: {
+        Args: {
+          p_action: string
+          p_max_requests: number
+          p_user_id: string
+          p_window_seconds: number
+        }
+        Returns: boolean
       }
       has_role: {
         Args: {
