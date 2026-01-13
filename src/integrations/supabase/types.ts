@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_request_queue: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          id: string
+          image_url: string | null
+          message: string | null
+          processed_at: string | null
+          result: Json | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          image_url?: string | null
+          message?: string | null
+          processed_at?: string | null
+          result?: Json | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          image_url?: string | null
+          message?: string | null
+          processed_at?: string | null
+          result?: Json | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -123,6 +159,50 @@ export type Database = {
           },
         ]
       }
+      commissions: {
+        Row: {
+          collected_at: string | null
+          commission_amount: number
+          commission_rate: number
+          created_at: string | null
+          id: string
+          order_amount: number
+          order_id: string | null
+          seller_id: string
+          status: string | null
+        }
+        Insert: {
+          collected_at?: string | null
+          commission_amount: number
+          commission_rate: number
+          created_at?: string | null
+          id?: string
+          order_amount: number
+          order_id?: string | null
+          seller_id: string
+          status?: string | null
+        }
+        Update: {
+          collected_at?: string | null
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string | null
+          id?: string
+          order_amount?: number
+          order_id?: string | null
+          seller_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commissions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crop_events: {
         Row: {
           created_at: string
@@ -152,6 +232,87 @@ export type Database = {
           id?: string
           notes?: string | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      daily_metrics: {
+        Row: {
+          active_users: number | null
+          created_at: string | null
+          date: string
+          id: string
+          new_farmers: number | null
+          new_orders: number | null
+          new_products: number | null
+          new_users: number | null
+          total_commission: number | null
+          total_gmv: number | null
+        }
+        Insert: {
+          active_users?: number | null
+          created_at?: string | null
+          date: string
+          id?: string
+          new_farmers?: number | null
+          new_orders?: number | null
+          new_products?: number | null
+          new_users?: number | null
+          total_commission?: number | null
+          total_gmv?: number | null
+        }
+        Update: {
+          active_users?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          new_farmers?: number | null
+          new_orders?: number | null
+          new_products?: number | null
+          new_users?: number | null
+          total_commission?: number | null
+          total_gmv?: number | null
+        }
+        Relationships: []
+      }
+      disease_history: {
+        Row: {
+          diagnosed_at: string | null
+          diagnosis: Json | null
+          disease_name: string | null
+          id: string
+          image_url: string | null
+          plant_name: string
+          resolved_at: string | null
+          treated_at: string | null
+          treatment_applied: string | null
+          treatment_result: string | null
+          user_id: string
+        }
+        Insert: {
+          diagnosed_at?: string | null
+          diagnosis?: Json | null
+          disease_name?: string | null
+          id?: string
+          image_url?: string | null
+          plant_name: string
+          resolved_at?: string | null
+          treated_at?: string | null
+          treatment_applied?: string | null
+          treatment_result?: string | null
+          user_id: string
+        }
+        Update: {
+          diagnosed_at?: string | null
+          diagnosis?: Json | null
+          disease_name?: string | null
+          id?: string
+          image_url?: string | null
+          plant_name?: string
+          resolved_at?: string | null
+          treated_at?: string | null
+          treatment_applied?: string | null
+          treatment_result?: string | null
           user_id?: string
         }
         Relationships: []
@@ -196,6 +357,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      farm_profiles: {
+        Row: {
+          created_at: string | null
+          district: string | null
+          farm_name: string | null
+          farm_size: number | null
+          farm_type: string[] | null
+          id: string
+          irrigation_type: string | null
+          region: string | null
+          soil_type: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          district?: string | null
+          farm_name?: string | null
+          farm_size?: number | null
+          farm_type?: string[] | null
+          id?: string
+          irrigation_type?: string | null
+          region?: string | null
+          soil_type?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          district?: string | null
+          farm_name?: string | null
+          farm_size?: number | null
+          farm_type?: string[] | null
+          id?: string
+          irrigation_type?: string | null
+          region?: string | null
+          soil_type?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       messages: {
         Row: {
@@ -482,6 +685,195 @@ export type Database = {
         }
         Relationships: []
       }
+      regional_metrics: {
+        Row: {
+          active_farmers: number | null
+          date: string
+          gmv: number | null
+          id: string
+          orders_count: number | null
+          region: string
+        }
+        Insert: {
+          active_farmers?: number | null
+          date: string
+          gmv?: number | null
+          id?: string
+          orders_count?: number | null
+          region: string
+        }
+        Update: {
+          active_farmers?: number | null
+          date?: string
+          gmv?: number | null
+          id?: string
+          orders_count?: number | null
+          region?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          id: string
+          is_verified_purchase: boolean | null
+          is_visible: boolean | null
+          order_id: string | null
+          product_id: string | null
+          rating: number
+          reviewer_id: string
+          seller_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          is_verified_purchase?: boolean | null
+          is_visible?: boolean | null
+          order_id?: string | null
+          product_id?: string | null
+          rating: number
+          reviewer_id: string
+          seller_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          is_verified_purchase?: boolean | null
+          is_visible?: boolean | null
+          order_id?: string | null
+          product_id?: string | null
+          rating?: number
+          reviewer_id?: string
+          seller_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seller_balances: {
+        Row: {
+          available_balance: number | null
+          id: string
+          pending_balance: number | null
+          total_earned: number | null
+          total_withdrawn: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          available_balance?: number | null
+          id?: string
+          pending_balance?: number | null
+          total_earned?: number | null
+          total_withdrawn?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          available_balance?: number | null
+          id?: string
+          pending_balance?: number | null
+          total_earned?: number | null
+          total_withdrawn?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      seller_verifications: {
+        Row: {
+          created_at: string | null
+          document_url: string | null
+          id: string
+          notes: string | null
+          status: string | null
+          user_id: string
+          verification_type: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          document_url?: string | null
+          id?: string
+          notes?: string | null
+          status?: string | null
+          user_id: string
+          verification_type: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          document_url?: string | null
+          id?: string
+          notes?: string | null
+          status?: string | null
+          user_id?: string
+          verification_type?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: []
+      }
+      subscription_plans: {
+        Row: {
+          ai_queries_limit: number | null
+          commission_rate: number | null
+          created_at: string | null
+          features: Json
+          id: string
+          is_active: boolean | null
+          max_products: number | null
+          name: string
+          price_monthly: number
+          price_yearly: number | null
+        }
+        Insert: {
+          ai_queries_limit?: number | null
+          commission_rate?: number | null
+          created_at?: string | null
+          features: Json
+          id?: string
+          is_active?: boolean | null
+          max_products?: number | null
+          name: string
+          price_monthly: number
+          price_yearly?: number | null
+        }
+        Update: {
+          ai_queries_limit?: number | null
+          commission_rate?: number | null
+          created_at?: string | null
+          features?: Json
+          id?: string
+          is_active?: boolean | null
+          max_products?: number | null
+          name?: string
+          price_monthly?: number
+          price_yearly?: number | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -502,6 +894,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_subscriptions: {
+        Row: {
+          cancelled_at: string | null
+          created_at: string | null
+          current_period_end: string
+          current_period_start: string
+          id: string
+          plan_id: string
+          status: string | null
+          trial_end: string | null
+          user_id: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          created_at?: string | null
+          current_period_end?: string
+          current_period_start?: string
+          id?: string
+          plan_id: string
+          status?: string | null
+          trial_end?: string | null
+          user_id: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          created_at?: string | null
+          current_period_end?: string
+          current_period_start?: string
+          id?: string
+          plan_id?: string
+          status?: string | null
+          trial_end?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
