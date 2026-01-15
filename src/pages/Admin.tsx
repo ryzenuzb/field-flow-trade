@@ -1,24 +1,96 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Users, Package, ShoppingCart, LogOut } from "lucide-react";
+import { Loader2, LogOut, RefreshCw, LayoutDashboard } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminCommandPanel } from "@/components/AdminCommandPanel";
+import { AdminStats } from "@/components/admin/AdminStats";
+import { RevenueChart } from "@/components/admin/RevenueChart";
+import { SellerVerificationPanel } from "@/components/admin/SellerVerificationPanel";
+import { UsersTable } from "@/components/admin/UsersTable";
+import { OrdersTable } from "@/components/admin/OrdersTable";
+import { ProductsTable } from "@/components/admin/ProductsTable";
+
+interface UserProfile {
+  id: string;
+  user_id: string;
+  full_name: string;
+  phone: string | null;
+  location: string | null;
+  created_at: string;
+  roles?: { role: string }[];
+}
+
+interface Product {
+  id: string;
+  title: string;
+  price: number;
+  unit: string;
+  category: string;
+  stock_quantity: number | null;
+  is_active: boolean | null;
+  created_at: string;
+  seller?: {
+    full_name: string;
+  };
+}
+
+interface Order {
+  id: string;
+  quantity: number;
+  total_price: number;
+  status: string | null;
+  created_at: string;
+  products?: {
+    title: string;
+    unit: string;
+  };
+  buyer?: {
+    full_name: string;
+  };
+  seller?: {
+    full_name: string;
+  };
+}
+
+interface Verification {
+  id: string;
+  user_id: string;
+  verification_type: string;
+  document_url: string | null;
+  status: string | null;
+  notes: string | null;
+  created_at: string | null;
+  verified_at: string | null;
+  profile?: {
+    full_name: string;
+    phone: string | null;
+    location: string | null;
+  };
+}
+
+interface DailyMetric {
+  date: string;
+  new_orders: number | null;
+  total_gmv: number | null;
+  total_commission: number | null;
+  new_users: number | null;
+}
 
 const Admin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [users, setUsers] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState("users");
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [verifications, setVerifications] = useState<Verification[]>([]);
+  const [dailyMetrics, setDailyMetrics] = useState<DailyMetric[]>([]);
+  const [activeTab, setActiveTab] = useState("dashboard");
 
   useEffect(() => {
     checkAdminAccess();
@@ -52,10 +124,10 @@ const Admin = () => {
 
       setIsAdmin(true);
       await loadData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Xatolik",
-        description: error.message,
+        description: error instanceof Error ? error.message : "Xatolik yuz berdi",
         variant: "destructive",
       });
       navigate("/");
@@ -64,42 +136,79 @@ const Admin = () => {
     }
   };
 
-  const loadData = async () => {
-    const [usersData, productsData, ordersData] = await Promise.all([
-      supabase.from("profiles").select("*"),
-      supabase.from("products").select("*, profiles(full_name)"),
-      supabase.from("orders").select("*, products(title), profiles(full_name)"),
-    ]);
+  const loadData = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const [
+        usersRes,
+        productsRes,
+        ordersRes,
+        verificationsRes,
+        metricsRes,
+        rolesRes,
+      ] = await Promise.all([
+        supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+        supabase.from("products").select("*").order("created_at", { ascending: false }),
+        supabase.from("orders").select("*, products(title, unit)").order("created_at", { ascending: false }),
+        supabase.from("seller_verifications").select("*").order("created_at", { ascending: false }),
+        supabase.from("daily_metrics").select("*").order("date", { ascending: false }).limit(30),
+        supabase.from("user_roles").select("user_id, role"),
+      ]);
 
-    setUsers(usersData.data || []);
-    setProducts(productsData.data || []);
-    setOrders(ordersData.data || []);
-  };
+      const profilesMap = new Map((usersRes.data || []).map(p => [p.user_id, p]));
+
+      // Merge roles with users
+      const usersWithRoles = (usersRes.data || []).map(user => ({
+        ...user,
+        roles: (rolesRes.data || []).filter(r => r.user_id === user.user_id),
+      }));
+
+      // Merge seller names with products
+      const productsWithSeller = (productsRes.data || []).map(product => ({
+        ...product,
+        seller: profilesMap.get(product.seller_id) 
+          ? { full_name: profilesMap.get(product.seller_id)!.full_name }
+          : undefined,
+      }));
+
+      // Merge buyer/seller names with orders
+      const ordersWithNames = (ordersRes.data || []).map(order => ({
+        ...order,
+        buyer: profilesMap.get(order.buyer_id)
+          ? { full_name: profilesMap.get(order.buyer_id)!.full_name }
+          : undefined,
+        seller: order.seller_id && profilesMap.get(order.seller_id)
+          ? { full_name: profilesMap.get(order.seller_id)!.full_name }
+          : undefined,
+      }));
+
+      // Merge profile with verifications
+      const verificationsWithProfile = (verificationsRes.data || []).map(v => ({
+        ...v,
+        profile: profilesMap.get(v.user_id)
+          ? {
+              full_name: profilesMap.get(v.user_id)!.full_name,
+              phone: profilesMap.get(v.user_id)!.phone,
+              location: profilesMap.get(v.user_id)!.location,
+            }
+          : undefined,
+      }));
+
+      setUsers(usersWithRoles);
+      setProducts(productsWithSeller as Product[]);
+      setOrders(ordersWithNames as Order[]);
+      setVerifications(verificationsWithProfile as Verification[]);
+      setDailyMetrics((metricsRes.data || []).reverse() as DailyMetric[]);
+    } catch (error) {
+      console.error("Error loading data:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
-  };
-
-  const toggleProductStatus = async (productId: string, currentStatus: boolean) => {
-    const { error } = await supabase
-      .from("products")
-      .update({ is_active: !currentStatus })
-      .eq("id", productId);
-
-    if (error) {
-      toast({
-        title: "Xatolik",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Muvaffaqiyat",
-        description: "Mahsulot holati o'zgartirildi",
-      });
-      loadData();
-    }
   };
 
   const handleNavigate = (section: string) => {
@@ -130,10 +239,25 @@ const Admin = () => {
     });
   };
 
+  // Calculate stats
+  const stats = {
+    totalUsers: users.length,
+    totalProducts: products.length,
+    totalOrders: orders.length,
+    totalRevenue: orders.reduce((sum, o) => sum + (o.total_price || 0), 0),
+    pendingVerifications: verifications.filter(v => v.status === "pending").length,
+    totalFarmers: users.filter(u => u.roles?.some(r => r.role === "farmer")).length,
+    pendingOrders: orders.filter(o => o.status === "pending").length,
+    deliveredOrders: orders.filter(o => o.status === "delivered").length,
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Yuklanmoqda...</p>
+        </div>
       </div>
     );
   }
@@ -144,10 +268,27 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
+      <header className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center gap-4">
-          <h1 className="text-2xl font-bold">Admin Panel</h1>
           <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <LayoutDashboard className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold">Admin Panel</h1>
+              <p className="text-sm text-muted-foreground">FarmTrade Boshqaruv</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={loadData}
+              variant="outline"
+              size="sm"
+              disabled={refreshing}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
+              Yangilash
+            </Button>
             <AdminCommandPanel
               users={users}
               products={products}
@@ -158,7 +299,7 @@ const Admin = () => {
               onSearchProduct={handleSearchProduct}
               onSearchOrder={handleSearchOrder}
             />
-            <Button onClick={handleSignOut} variant="outline">
+            <Button onClick={handleSignOut} variant="outline" size="sm">
               <LogOut className="mr-2 h-4 w-4" />
               Chiqish
             </Button>
@@ -166,166 +307,50 @@ const Admin = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="grid gap-4 md:grid-cols-3 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Jami Foydalanuvchilar</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{users.length}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Jami Mahsulotlar</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{products.length}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Jami Buyurtmalar</CardTitle>
-              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{orders.length}</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="users">Foydalanuvchilar</TabsTrigger>
-            <TabsTrigger value="products">Mahsulotlar</TabsTrigger>
-            <TabsTrigger value="orders">Buyurtmalar</TabsTrigger>
+      <main className="container mx-auto px-4 py-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="bg-muted/50 p-1">
+            <TabsTrigger value="dashboard" className="data-[state=active]:bg-background">
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="users" className="data-[state=active]:bg-background">
+              Foydalanuvchilar
+            </TabsTrigger>
+            <TabsTrigger value="products" className="data-[state=active]:bg-background">
+              Mahsulotlar
+            </TabsTrigger>
+            <TabsTrigger value="orders" className="data-[state=active]:bg-background">
+              Buyurtmalar
+            </TabsTrigger>
+            <TabsTrigger value="verifications" className="data-[state=active]:bg-background">
+              Tasdiqlash
+              {stats.pendingVerifications > 0 && (
+                <span className="ml-2 px-2 py-0.5 text-xs bg-destructive text-destructive-foreground rounded-full">
+                  {stats.pendingVerifications}
+                </span>
+              )}
+            </TabsTrigger>
           </TabsList>
 
+          <TabsContent value="dashboard" className="space-y-6">
+            <AdminStats stats={stats} />
+            <RevenueChart dailyMetrics={dailyMetrics} />
+          </TabsContent>
+
           <TabsContent value="users">
-            <Card>
-              <CardHeader>
-                <CardTitle>Foydalanuvchilar</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Ism</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Telefon</TableHead>
-                      <TableHead>Joylashuv</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell>{user.full_name}</TableCell>
-                        <TableCell>{user.user_id}</TableCell>
-                        <TableCell>{user.phone || "-"}</TableCell>
-                        <TableCell>{user.location || "-"}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+            <UsersTable users={users} />
           </TabsContent>
 
           <TabsContent value="products">
-            <Card>
-              <CardHeader>
-                <CardTitle>Mahsulotlar</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nomi</TableHead>
-                      <TableHead>Sotuvchi</TableHead>
-                      <TableHead>Narx</TableHead>
-                      <TableHead>Kategoriya</TableHead>
-                      <TableHead>Holat</TableHead>
-                      <TableHead>Amal</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {products.map((product) => (
-                      <TableRow key={product.id}>
-                        <TableCell>{product.title}</TableCell>
-                        <TableCell>{product.profiles?.full_name}</TableCell>
-                        <TableCell>{product.price} so'm/{product.unit}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{product.category}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={product.is_active ? "default" : "secondary"}>
-                            {product.is_active ? "Faol" : "Nofaol"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => toggleProductStatus(product.id, product.is_active)}
-                          >
-                            {product.is_active ? "Nofaol qilish" : "Faollashtirish"}
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+            <ProductsTable products={products} onRefresh={loadData} />
           </TabsContent>
 
           <TabsContent value="orders">
-            <Card>
-              <CardHeader>
-                <CardTitle>Buyurtmalar</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Mahsulot</TableHead>
-                      <TableHead>Xaridor</TableHead>
-                      <TableHead>Miqdor</TableHead>
-                      <TableHead>Summa</TableHead>
-                      <TableHead>Holat</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {orders.map((order) => (
-                      <TableRow key={order.id}>
-                        <TableCell>{order.products?.title}</TableCell>
-                        <TableCell>{order.profiles?.full_name}</TableCell>
-                        <TableCell>{order.quantity}</TableCell>
-                        <TableCell>{order.total_price} so'm</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              order.status === "delivered"
-                                ? "default"
-                                : order.status === "pending"
-                                ? "secondary"
-                                : "destructive"
-                            }
-                          >
-                            {order.status}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+            <OrdersTable orders={orders} onRefresh={loadData} />
+          </TabsContent>
+
+          <TabsContent value="verifications">
+            <SellerVerificationPanel verifications={verifications} onRefresh={loadData} />
           </TabsContent>
         </Tabs>
       </main>
