@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Marketplace from "./pages/Marketplace";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
+import AdminLogin from "./pages/AdminLogin";
 import Chat from "./pages/Chat";
 import Profile from "./pages/Profile";
 import FarmerDashboard from "./pages/FarmerDashboard";
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/profile" element={<Profile />} />
