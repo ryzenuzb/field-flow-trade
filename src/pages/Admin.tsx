@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,12 @@ import { SellerVerificationPanel } from "@/components/admin/SellerVerificationPa
 import { UsersTable } from "@/components/admin/UsersTable";
 import { OrdersTable } from "@/components/admin/OrdersTable";
 import { ProductsTable } from "@/components/admin/ProductsTable";
+import { DataExport } from "@/components/admin/DataExport";
+import { MessageCenter } from "@/components/admin/MessageCenter";
+import { AdvancedFilters, FilterState } from "@/components/admin/AdvancedFilters";
+import { ProductCategoryChart } from "@/components/admin/ProductCategoryChart";
+import { OrderStatusChart } from "@/components/admin/OrderStatusChart";
+import { RegionalStats } from "@/components/admin/RegionalStats";
 
 interface UserProfile {
   id: string;
@@ -91,6 +97,14 @@ const Admin = () => {
   const [verifications, setVerifications] = useState<Verification[]>([]);
   const [dailyMetrics, setDailyMetrics] = useState<DailyMetric[]>([]);
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [filters, setFilters] = useState<FilterState>({
+    search: "",
+    status: "all",
+    category: "all",
+    dateFrom: "",
+    dateTo: "",
+    role: "all",
+  });
 
   useEffect(() => {
     checkAdminAccess();
@@ -239,6 +253,66 @@ const Admin = () => {
     });
   };
 
+  // Filter functions using useMemo
+  const filteredUsers = useMemo(() => {
+    return users.filter((user) => {
+      const matchesSearch =
+        !filters.search ||
+        user.full_name?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        user.phone?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        user.location?.toLowerCase().includes(filters.search.toLowerCase());
+
+      const matchesRole =
+        filters.role === "all" ||
+        (filters.role === "farmer" && user.roles?.some((r) => r.role === "farmer")) ||
+        (filters.role === "admin" && user.roles?.some((r) => r.role === "admin")) ||
+        (filters.role === "buyer" && !user.roles?.some((r) => r.role === "farmer" || r.role === "admin"));
+
+      const matchesDate =
+        (!filters.dateFrom || new Date(user.created_at) >= new Date(filters.dateFrom)) &&
+        (!filters.dateTo || new Date(user.created_at) <= new Date(filters.dateTo));
+
+      return matchesSearch && matchesRole && matchesDate;
+    });
+  }, [users, filters]);
+
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const matchesSearch =
+        !filters.search ||
+        product.title?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        product.seller?.full_name?.toLowerCase().includes(filters.search.toLowerCase());
+
+      const matchesCategory =
+        filters.category === "all" || product.category === filters.category;
+
+      const matchesDate =
+        (!filters.dateFrom || new Date(product.created_at) >= new Date(filters.dateFrom)) &&
+        (!filters.dateTo || new Date(product.created_at) <= new Date(filters.dateTo));
+
+      return matchesSearch && matchesCategory && matchesDate;
+    });
+  }, [products, filters]);
+
+  const filteredOrders = useMemo(() => {
+    return orders.filter((order) => {
+      const matchesSearch =
+        !filters.search ||
+        order.products?.title?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        order.buyer?.full_name?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        order.seller?.full_name?.toLowerCase().includes(filters.search.toLowerCase());
+
+      const matchesStatus =
+        filters.status === "all" || order.status === filters.status;
+
+      const matchesDate =
+        (!filters.dateFrom || new Date(order.created_at) >= new Date(filters.dateFrom)) &&
+        (!filters.dateTo || new Date(order.created_at) <= new Date(filters.dateTo));
+
+      return matchesSearch && matchesStatus && matchesDate;
+    });
+  }, [orders, filters]);
+
   // Calculate stats
   const stats = {
     totalUsers: users.length,
@@ -309,7 +383,7 @@ const Admin = () => {
 
       <main className="container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-muted/50 p-1">
+          <TabsList className="bg-muted/50 p-1 flex-wrap">
             <TabsTrigger value="dashboard" className="data-[state=active]:bg-background">
               Dashboard
             </TabsTrigger>
@@ -330,27 +404,59 @@ const Admin = () => {
                 </span>
               )}
             </TabsTrigger>
+            <TabsTrigger value="tools" className="data-[state=active]:bg-background">
+              Asboblar
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
             <AdminStats stats={stats} />
-            <RevenueChart dailyMetrics={dailyMetrics} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <RevenueChart dailyMetrics={dailyMetrics} />
+              <OrderStatusChart orders={orders} />
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <ProductCategoryChart products={products} />
+              <RegionalStats users={users} products={products} />
+            </div>
           </TabsContent>
 
-          <TabsContent value="users">
-            <UsersTable users={users} />
+          <TabsContent value="users" className="space-y-4">
+            <AdvancedFilters
+              type="users"
+              onFilterChange={setFilters}
+              activeFilters={filters}
+            />
+            <UsersTable users={filteredUsers} />
           </TabsContent>
 
-          <TabsContent value="products">
-            <ProductsTable products={products} onRefresh={loadData} />
+          <TabsContent value="products" className="space-y-4">
+            <AdvancedFilters
+              type="products"
+              onFilterChange={setFilters}
+              activeFilters={filters}
+            />
+            <ProductsTable products={filteredProducts} onRefresh={loadData} />
           </TabsContent>
 
-          <TabsContent value="orders">
-            <OrdersTable orders={orders} onRefresh={loadData} />
+          <TabsContent value="orders" className="space-y-4">
+            <AdvancedFilters
+              type="orders"
+              onFilterChange={setFilters}
+              activeFilters={filters}
+            />
+            <OrdersTable orders={filteredOrders} onRefresh={loadData} />
           </TabsContent>
 
           <TabsContent value="verifications">
             <SellerVerificationPanel verifications={verifications} onRefresh={loadData} />
+          </TabsContent>
+
+          <TabsContent value="tools" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <DataExport users={users} products={products} orders={orders} />
+              <MessageCenter users={users} />
+            </div>
           </TabsContent>
         </Tabs>
       </main>
