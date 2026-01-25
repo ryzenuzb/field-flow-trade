@@ -26,6 +26,9 @@ interface UserProfile {
   phone: string | null;
   location: string | null;
   created_at: string;
+  is_blocked?: boolean;
+  blocked_at?: string | null;
+  block_reason?: string | null;
   roles?: { role: string }[];
 }
 
@@ -427,7 +430,7 @@ const Admin = () => {
               onFilterChange={setFilters}
               activeFilters={filters}
             />
-            <UsersTable users={filteredUsers} />
+            <UsersTable users={filteredUsers} onRefresh={loadData} />
           </TabsContent>
 
           <TabsContent value="products" className="space-y-4">
