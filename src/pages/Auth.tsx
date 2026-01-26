@@ -85,29 +85,51 @@ const Auth = () => {
 
       if (error) throw error;
 
-      if (checkFarmerRole && data.user) {
-        // Check if user has farmer role
-        const { data: roleData } = await supabase
-          .from("user_roles")
-          .select("role")
+      if (data.user) {
+        // Check if user is blocked
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("is_blocked, block_reason")
           .eq("user_id", data.user.id)
-          .eq("role", "farmer")
           .maybeSingle();
 
-        if (!roleData) {
+        if (profileData?.is_blocked) {
           await supabase.auth.signOut();
           toast({
-            title: "Ruxsat yo'q",
-            description: "Bu hisob fermer sifatida ro'yxatdan o'tmagan",
+            title: "Hisob bloklangan",
+            description: profileData.block_reason 
+              ? `Sabab: ${profileData.block_reason}` 
+              : "Sizning hisobingiz bloklangan. Iltimos, admin bilan bog'laning.",
             variant: "destructive",
           });
           setLoading(false);
           return;
         }
 
-        navigate("/farmer");
-      } else {
-        navigate("/");
+        if (checkFarmerRole) {
+          // Check if user has farmer role
+          const { data: roleData } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", data.user.id)
+            .eq("role", "farmer")
+            .maybeSingle();
+
+          if (!roleData) {
+            await supabase.auth.signOut();
+            toast({
+              title: "Ruxsat yo'q",
+              description: "Bu hisob fermer sifatida ro'yxatdan o'tmagan",
+              variant: "destructive",
+            });
+            setLoading(false);
+            return;
+          }
+
+          navigate("/farmer");
+        } else {
+          navigate("/");
+        }
       }
     } catch (error: any) {
       toast({
