@@ -22,6 +22,7 @@ interface UserProfile {
   id: string;
   user_id: string;
   full_name: string;
+  email?: string | null;
   phone: string | null;
   location: string | null;
   created_at: string;
@@ -69,10 +70,16 @@ export const UsersTable = ({ users, onRefresh }: UsersTableProps) => {
   };
 
   const sendBlockNotification = async (user: UserProfile, isBlocked: boolean, reason?: string) => {
+    // Only send if user has email
+    if (!user.email) {
+      console.log("No email found for user, skipping notification");
+      return;
+    }
+
     try {
       const { error } = await supabase.functions.invoke("send-block-notification", {
         body: {
-          email: user.user_id, // We'll need to get email from auth
+          email: user.email,
           fullName: user.full_name,
           blockReason: reason,
           isBlocked: isBlocked,
@@ -82,7 +89,7 @@ export const UsersTable = ({ users, onRefresh }: UsersTableProps) => {
       if (error) {
         console.error("Email notification error:", error);
       } else {
-        console.log("Block notification sent successfully");
+        console.log("Block notification sent successfully to:", user.email);
       }
     } catch (err) {
       console.error("Failed to send block notification:", err);
