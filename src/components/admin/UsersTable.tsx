@@ -68,17 +68,39 @@ export const UsersTable = ({ users, onRefresh }: UsersTableProps) => {
     setBlockDialogOpen(true);
   };
 
+  const sendBlockNotification = async (user: UserProfile, isBlocked: boolean, reason?: string) => {
+    try {
+      const { error } = await supabase.functions.invoke("send-block-notification", {
+        body: {
+          email: user.user_id, // We'll need to get email from auth
+          fullName: user.full_name,
+          blockReason: reason,
+          isBlocked: isBlocked,
+        },
+      });
+
+      if (error) {
+        console.error("Email notification error:", error);
+      } else {
+        console.log("Block notification sent successfully");
+      }
+    } catch (err) {
+      console.error("Failed to send block notification:", err);
+    }
+  };
+
   const handleBlockUser = async () => {
     if (!selectedUser) return;
 
     setLoading(true);
     try {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
+      const newBlockedStatus = !selectedUser.is_blocked;
 
       const { error } = await supabase
         .from("profiles")
         .update({
-          is_blocked: !selectedUser.is_blocked,
+          is_blocked: newBlockedStatus,
           blocked_at: selectedUser.is_blocked ? null : new Date().toISOString(),
           blocked_by: selectedUser.is_blocked ? null : currentUser?.id,
           block_reason: selectedUser.is_blocked ? null : blockReason || null,
@@ -87,11 +109,14 @@ export const UsersTable = ({ users, onRefresh }: UsersTableProps) => {
 
       if (error) throw error;
 
+      // Send email notification in background
+      sendBlockNotification(selectedUser, newBlockedStatus, blockReason);
+
       toast({
         title: "Muvaffaqiyatli",
         description: selectedUser.is_blocked
           ? `${selectedUser.full_name} blokdan chiqarildi`
-          : `${selectedUser.full_name} bloklandi`,
+          : `${selectedUser.full_name} bloklandi. Email xabar yuborildi.`,
       });
 
       setBlockDialogOpen(false);
