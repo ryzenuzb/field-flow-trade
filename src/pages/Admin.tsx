@@ -23,6 +23,7 @@ interface UserProfile {
   id: string;
   user_id: string;
   full_name: string;
+  email?: string | null;
   phone: string | null;
   location: string | null;
   created_at: string;

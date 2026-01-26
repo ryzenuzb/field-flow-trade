@@ -631,6 +631,7 @@ export type Database = {
           blocked_at: string | null
           blocked_by: string | null
           created_at: string
+          email: string | null
           full_name: string
           id: string
           is_blocked: boolean | null
@@ -644,6 +645,7 @@ export type Database = {
           blocked_at?: string | null
           blocked_by?: string | null
           created_at?: string
+          email?: string | null
           full_name: string
           id?: string
           is_blocked?: boolean | null
@@ -657,6 +659,7 @@ export type Database = {
           blocked_at?: string | null
           blocked_by?: string | null
           created_at?: string
+          email?: string | null
           full_name?: string
           id?: string
           is_blocked?: boolean | null
