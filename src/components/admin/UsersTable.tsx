@@ -14,7 +14,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
-import { User, MapPin, Phone, Ban, CheckCircle, Loader2, ShieldAlert } from "lucide-react";
+import { User, MapPin, Phone, Ban, CheckCircle, Loader2, ShieldAlert, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -164,6 +164,7 @@ export const UsersTable = ({ users, onRefresh }: UsersTableProps) => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Ism</TableHead>
+                    <TableHead>Email</TableHead>
                     <TableHead>Telefon</TableHead>
                     <TableHead>Joylashuv</TableHead>
                     <TableHead>Rol</TableHead>
@@ -190,6 +191,16 @@ export const UsersTable = ({ users, onRefresh }: UsersTableProps) => {
                             {user.full_name}
                           </span>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {user.email ? (
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <Mail className="h-3 w-3" />
+                            <span className="text-sm">{user.email}</span>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         {user.phone ? (
