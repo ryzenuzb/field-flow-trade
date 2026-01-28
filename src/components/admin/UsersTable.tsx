@@ -74,7 +74,7 @@ export const UsersTable = ({ users, onRefresh, isMainAdmin = false, isSubAdmin =
     );
   };
 
-  const isUserSubAdmin = (user: UserProfile) => user.roles?.some((r) => r.role === "sub_admin");
+  const isUserSubAdmin = (user: UserProfile | null) => user?.roles?.some((r) => r.role === "sub_admin") ?? false;
 
   const handleSubAdminClick = (user: UserProfile) => {
     setSelectedUser(user);
@@ -419,10 +419,10 @@ export const UsersTable = ({ users, onRefresh, isMainAdmin = false, isSubAdmin =
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-amber-500" />
-              {isUserSubAdmin(selectedUser!) ? "Kichik admin rolini olib tashlash" : "Kichik admin tayinlash"}
+              {isUserSubAdmin(selectedUser) ? "Kichik admin rolini olib tashlash" : "Kichik admin tayinlash"}
             </DialogTitle>
             <DialogDescription>
-              {isUserSubAdmin(selectedUser!)
+              {isUserSubAdmin(selectedUser)
                 ? `${selectedUser?.full_name} ning kichik admin huquqlarini olib tashlamoqchimisiz?`
                 : `${selectedUser?.full_name} ni kichik admin sifatida tayinlamoqchimisiz? Kichik adminlar cheklangan huquqlarga ega bo'ladi.`}
             </DialogDescription>
@@ -449,13 +449,13 @@ export const UsersTable = ({ users, onRefresh, isMainAdmin = false, isSubAdmin =
               Bekor qilish
             </Button>
             <Button
-              variant={isUserSubAdmin(selectedUser!) ? "destructive" : "default"}
+              variant={isUserSubAdmin(selectedUser) ? "destructive" : "default"}
               onClick={handleToggleSubAdmin}
               disabled={loading}
-              className={!isUserSubAdmin(selectedUser!) ? "bg-amber-500 hover:bg-amber-600" : ""}
+              className={!isUserSubAdmin(selectedUser) ? "bg-amber-500 hover:bg-amber-600" : ""}
             >
               {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {isUserSubAdmin(selectedUser!) ? "Huquqni olib tashlash" : "Tayinlash"}
+              {isUserSubAdmin(selectedUser) ? "Huquqni olib tashlash" : "Tayinlash"}
             </Button>
           </DialogFooter>
         </DialogContent>
