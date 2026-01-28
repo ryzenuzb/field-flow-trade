@@ -963,6 +963,10 @@ export type Database = {
         Args: { user_id_param: string }
         Returns: undefined
       }
+      assign_sub_admin_role: {
+        Args: { target_user_id: string }
+        Returns: undefined
+      }
       check_rate_limit: {
         Args: {
           p_action: string
@@ -984,9 +988,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_main_admin: { Args: { _user_id: string }; Returns: boolean }
+      remove_sub_admin_role: {
+        Args: { target_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
-      app_role: "admin" | "farmer" | "buyer"
+      app_role: "admin" | "farmer" | "buyer" | "sub_admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1114,7 +1123,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "farmer", "buyer"],
+      app_role: ["admin", "farmer", "buyer", "sub_admin"],
     },
   },
 } as const

@@ -95,6 +95,9 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isMainAdmin, setIsMainAdmin] = useState(false);
+  const [isSubAdmin, setIsSubAdmin] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -123,14 +126,17 @@ const Admin = () => {
         return;
       }
 
+      setCurrentUserId(user.id);
+
       const { data: roles } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", user.id);
 
       const hasAdminRole = roles?.some(r => r.role === "admin");
+      const hasSubAdminRole = roles?.some(r => r.role === "sub_admin");
       
-      if (!hasAdminRole) {
+      if (!hasAdminRole && !hasSubAdminRole) {
         toast({
           title: "Ruxsat yo'q",
           description: "Sizda admin paneliga kirish huquqi yo'q",
@@ -140,6 +146,16 @@ const Admin = () => {
         return;
       }
 
+      // Check if main admin
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const isMain = hasAdminRole && profile?.email === "admin@gmail.com";
+      setIsMainAdmin(isMain);
+      setIsSubAdmin(hasSubAdminRole && !isMain);
       setIsAdmin(true);
       await loadData();
     } catch (error: unknown) {
@@ -264,13 +280,15 @@ const Admin = () => {
         !filters.search ||
         user.full_name?.toLowerCase().includes(filters.search.toLowerCase()) ||
         user.phone?.toLowerCase().includes(filters.search.toLowerCase()) ||
-        user.location?.toLowerCase().includes(filters.search.toLowerCase());
+        user.location?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        user.email?.toLowerCase().includes(filters.search.toLowerCase());
 
       const matchesRole =
         filters.role === "all" ||
         (filters.role === "farmer" && user.roles?.some((r) => r.role === "farmer")) ||
         (filters.role === "admin" && user.roles?.some((r) => r.role === "admin")) ||
-        (filters.role === "buyer" && !user.roles?.some((r) => r.role === "farmer" || r.role === "admin"));
+        (filters.role === "sub_admin" && user.roles?.some((r) => r.role === "sub_admin")) ||
+        (filters.role === "buyer" && !user.roles?.some((r) => ["farmer", "admin", "sub_admin"].includes(r.role)));
 
       const matchesDate =
         (!filters.dateFrom || new Date(user.created_at) >= new Date(filters.dateFrom)) &&
@@ -353,8 +371,12 @@ const Admin = () => {
               <LayoutDashboard className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">Admin Panel</h1>
-              <p className="text-sm text-muted-foreground">FarmTrade Boshqaruv</p>
+              <h1 className="text-xl font-bold">
+                {isMainAdmin ? "Admin Panel" : "Kichik Admin Panel"}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                FarmTrade Boshqaruv {isSubAdmin && "(Cheklangan huquqlar)"}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -408,9 +430,11 @@ const Admin = () => {
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="tools" className="data-[state=active]:bg-background">
-              Asboblar
-            </TabsTrigger>
+            {isMainAdmin && (
+              <TabsTrigger value="tools" className="data-[state=active]:bg-background">
+                Asboblar
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
@@ -431,7 +455,13 @@ const Admin = () => {
               onFilterChange={setFilters}
               activeFilters={filters}
             />
-            <UsersTable users={filteredUsers} onRefresh={loadData} />
+            <UsersTable 
+              users={filteredUsers} 
+              onRefresh={loadData} 
+              isMainAdmin={isMainAdmin}
+              isSubAdmin={isSubAdmin}
+              currentUserId={currentUserId}
+            />
           </TabsContent>
 
           <TabsContent value="products" className="space-y-4">
@@ -440,7 +470,7 @@ const Admin = () => {
               onFilterChange={setFilters}
               activeFilters={filters}
             />
-            <ProductsTable products={filteredProducts} onRefresh={loadData} />
+            <ProductsTable products={filteredProducts} onRefresh={loadData} isSubAdmin={isSubAdmin} />
           </TabsContent>
 
           <TabsContent value="orders" className="space-y-4">
@@ -456,12 +486,15 @@ const Admin = () => {
             <SellerVerificationPanel verifications={verifications} onRefresh={loadData} />
           </TabsContent>
 
-          <TabsContent value="tools" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <DataExport users={users} products={products} orders={orders} />
-              <MessageCenter users={users} />
-            </div>
-          </TabsContent>
+          {/* Tools tab only visible for main admin */}
+          {isMainAdmin && (
+            <TabsContent value="tools" className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <DataExport users={users} products={products} orders={orders} />
+                <MessageCenter users={users} />
+              </div>
+            </TabsContent>
+          )}
         </Tabs>
       </main>
     </div>

@@ -49,7 +49,8 @@ const CATEGORY_OPTIONS = [
 
 const ROLE_OPTIONS = [
   { value: "all", label: "Barchasi" },
-  { value: "admin", label: "Admin" },
+  { value: "admin", label: "Asosiy Admin" },
+  { value: "sub_admin", label: "Kichik Admin" },
   { value: "farmer", label: "Fermer" },
   { value: "buyer", label: "Xaridor" },
 ];

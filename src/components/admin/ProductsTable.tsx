@@ -24,9 +24,10 @@ interface Product {
 interface ProductsTableProps {
   products: Product[];
   onRefresh: () => void;
+  isSubAdmin?: boolean;
 }
 
-export const ProductsTable = ({ products, onRefresh }: ProductsTableProps) => {
+export const ProductsTable = ({ products, onRefresh, isSubAdmin = false }: ProductsTableProps) => {
   const { toast } = useToast();
 
   const toggleProductStatus = async (productId: string, currentStatus: boolean | null) => {

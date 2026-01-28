@@ -21,15 +21,14 @@ const AdminLogin = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
-        // Check if user is admin
+        // Check if user is admin or sub_admin
         const { data: roleData } = await supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', session.user.id)
-          .eq('role', 'admin')
-          .single();
+          .in('role', ['admin', 'sub_admin']);
         
-        if (roleData) {
+        if (roleData && roleData.length > 0) {
           navigate('/admin');
           return;
         }
@@ -66,16 +65,15 @@ const AdminLogin = () => {
         throw new Error("Foydalanuvchi topilmadi");
       }
 
-      // Check if user has admin role
+      // Check if user has admin or sub_admin role
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', authData.user.id)
-        .eq('role', 'admin')
-        .single();
+        .in('role', ['admin', 'sub_admin']);
 
-      if (roleError || !roleData) {
-        // Sign out if not admin
+      if (roleError || !roleData || roleData.length === 0) {
+        // Sign out if not admin or sub_admin
         await supabase.auth.signOut();
         throw new Error("Sizda admin huquqi yo'q");
       }
