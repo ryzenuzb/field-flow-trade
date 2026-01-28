@@ -14,7 +14,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
-import { User, MapPin, Phone, Ban, CheckCircle, Loader2, ShieldAlert, Mail } from "lucide-react";
+import { User, MapPin, Phone, Ban, CheckCircle, Loader2, ShieldAlert, Mail, UserCog, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -35,11 +35,15 @@ interface UserProfile {
 interface UsersTableProps {
   users: UserProfile[];
   onRefresh?: () => void;
+  isMainAdmin?: boolean;
+  isSubAdmin?: boolean;
+  currentUserId?: string | null;
 }
 
-export const UsersTable = ({ users, onRefresh }: UsersTableProps) => {
+export const UsersTable = ({ users, onRefresh, isMainAdmin = false, isSubAdmin = false, currentUserId }: UsersTableProps) => {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
+  const [subAdminDialogOpen, setSubAdminDialogOpen] = useState(false);
   const [blockReason, setBlockReason] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -54,13 +58,73 @@ export const UsersTable = ({ users, onRefresh }: UsersTableProps) => {
         {roles.map((r, idx) => (
           <Badge
             key={idx}
-            variant={r.role === "admin" ? "destructive" : r.role === "farmer" ? "default" : "secondary"}
+            variant={
+              r.role === "admin" ? "destructive" : 
+              r.role === "sub_admin" ? "default" :
+              r.role === "farmer" ? "secondary" : "outline"
+            }
+            className={r.role === "sub_admin" ? "bg-amber-500 hover:bg-amber-600" : ""}
           >
-            {r.role === "admin" ? "Admin" : r.role === "farmer" ? "Fermer" : "Xaridor"}
+            {r.role === "admin" ? "Asosiy Admin" : 
+             r.role === "sub_admin" ? "Kichik Admin" :
+             r.role === "farmer" ? "Fermer" : "Xaridor"}
           </Badge>
         ))}
       </div>
     );
+  };
+
+  const isUserSubAdmin = (user: UserProfile) => user.roles?.some((r) => r.role === "sub_admin");
+
+  const handleSubAdminClick = (user: UserProfile) => {
+    setSelectedUser(user);
+    setSubAdminDialogOpen(true);
+  };
+
+  const handleToggleSubAdmin = async () => {
+    if (!selectedUser) return;
+
+    setLoading(true);
+    try {
+      const hasSubAdminRole = isUserSubAdmin(selectedUser);
+      
+      if (hasSubAdminRole) {
+        // Remove sub_admin role
+        const { error } = await supabase.rpc("remove_sub_admin_role", {
+          target_user_id: selectedUser.user_id,
+        });
+        if (error) throw error;
+        
+        toast({
+          title: "Muvaffaqiyatli",
+          description: `${selectedUser.full_name} kichik admin rolidan olib tashlandi`,
+        });
+      } else {
+        // Add sub_admin role
+        const { error } = await supabase.rpc("assign_sub_admin_role", {
+          target_user_id: selectedUser.user_id,
+        });
+        if (error) throw error;
+        
+        toast({
+          title: "Muvaffaqiyatli",
+          description: `${selectedUser.full_name} kichik admin sifatida tayinlandi`,
+        });
+      }
+
+      setSubAdminDialogOpen(false);
+      setSelectedUser(null);
+      onRefresh?.();
+    } catch (error: any) {
+      console.error("Sub-admin toggle error:", error);
+      toast({
+        title: "Xatolik",
+        description: error.message || "Kichik admin rolini o'zgartirishda xatolik",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBlockClick = (user: UserProfile) => {
@@ -240,25 +304,40 @@ export const UsersTable = ({ users, onRefresh }: UsersTableProps) => {
                         {format(new Date(user.created_at), "dd.MM.yyyy")}
                       </TableCell>
                       <TableCell className="text-right">
-                        {!isAdmin(user) && (
-                          <Button
-                            variant={user.is_blocked ? "outline" : "destructive"}
-                            size="sm"
-                            onClick={() => handleBlockClick(user)}
-                          >
-                            {user.is_blocked ? (
-                              <>
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                                Blokdan chiqarish
-                              </>
-                            ) : (
-                              <>
-                                <Ban className="h-4 w-4 mr-1" />
-                                Bloklash
-                              </>
-                            )}
-                          </Button>
-                        )}
+                        <div className="flex gap-2 justify-end">
+                          {/* Sub-admin toggle - only for main admin */}
+                          {isMainAdmin && !isAdmin(user) && user.user_id !== currentUserId && (
+                            <Button
+                              variant={isUserSubAdmin(user) ? "secondary" : "outline"}
+                              size="sm"
+                              onClick={() => handleSubAdminClick(user)}
+                              className={isUserSubAdmin(user) ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}
+                            >
+                              <UserCog className="h-4 w-4 mr-1" />
+                              {isUserSubAdmin(user) ? "Kichik Admin" : "Admin qilish"}
+                            </Button>
+                          )}
+                          {/* Block toggle - admins can't be blocked, sub-admins can't block */}
+                          {!isAdmin(user) && !isSubAdmin && (
+                            <Button
+                              variant={user.is_blocked ? "outline" : "destructive"}
+                              size="sm"
+                              onClick={() => handleBlockClick(user)}
+                            >
+                              {user.is_blocked ? (
+                                <>
+                                  <CheckCircle className="h-4 w-4 mr-1" />
+                                  Blokdan chiqarish
+                                </>
+                              ) : (
+                                <>
+                                  <Ban className="h-4 w-4 mr-1" />
+                                  Bloklash
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -329,6 +408,54 @@ export const UsersTable = ({ users, onRefresh }: UsersTableProps) => {
             >
               {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {selectedUser?.is_blocked ? "Blokdan chiqarish" : "Bloklash"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sub-Admin Dialog */}
+      <Dialog open={subAdminDialogOpen} onOpenChange={setSubAdminDialogOpen}>
+        <DialogContent className="bg-background">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-amber-500" />
+              {isUserSubAdmin(selectedUser!) ? "Kichik admin rolini olib tashlash" : "Kichik admin tayinlash"}
+            </DialogTitle>
+            <DialogDescription>
+              {isUserSubAdmin(selectedUser!)
+                ? `${selectedUser?.full_name} ning kichik admin huquqlarini olib tashlamoqchimisiz?`
+                : `${selectedUser?.full_name} ni kichik admin sifatida tayinlamoqchimisiz? Kichik adminlar cheklangan huquqlarga ega bo'ladi.`}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="p-3 bg-muted rounded-lg space-y-2">
+            <p className="text-sm font-medium">Kichik admin huquqlari:</p>
+            <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+              <li>Mahsulotlarni ko'rish va moderatsiya qilish</li>
+              <li>Buyurtmalarni ko'rish</li>
+              <li>Sotuvchi tasdiqlashlarini ko'rib chiqish</li>
+            </ul>
+            <p className="text-sm font-medium mt-3">Cheklangan huquqlar:</p>
+            <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+              <li className="text-destructive">Foydalanuvchilarni bloklash mumkin emas</li>
+              <li className="text-destructive">Ma'lumotlarni eksport qilish mumkin emas</li>
+              <li className="text-destructive">Ommaviy xabar yuborish mumkin emas</li>
+              <li className="text-destructive">Boshqa adminlarni tayinlash mumkin emas</li>
+            </ul>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSubAdminDialogOpen(false)} disabled={loading}>
+              Bekor qilish
+            </Button>
+            <Button
+              variant={isUserSubAdmin(selectedUser!) ? "destructive" : "default"}
+              onClick={handleToggleSubAdmin}
+              disabled={loading}
+              className={!isUserSubAdmin(selectedUser!) ? "bg-amber-500 hover:bg-amber-600" : ""}
+            >
+              {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {isUserSubAdmin(selectedUser!) ? "Huquqni olib tashlash" : "Tayinlash"}
             </Button>
           </DialogFooter>
         </DialogContent>
