@@ -6,6 +6,7 @@ import farmHeroImage from "@/assets/farm-hero.jpg";
 import Navigation from "@/components/ui/navigation";
 import AIAssistant from "@/components/AIAssistant";
 import { WeatherWidget } from "@/components/WeatherWidget";
+import SubAdminPanel from "@/components/SubAdminPanel";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
@@ -52,6 +53,9 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
+      
+      {/* Sub-Admin Panel - Only visible for sub-admins */}
+      <SubAdminPanel />
       
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center overflow-hidden">
