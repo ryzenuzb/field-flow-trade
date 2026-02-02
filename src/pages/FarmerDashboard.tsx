@@ -699,8 +699,10 @@ const FarmerDashboard = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="kg">kg</SelectItem>
+                    <SelectItem value="tonna">tonna</SelectItem>
                     <SelectItem value="litr">litr</SelectItem>
                     <SelectItem value="dona">dona</SelectItem>
+                    <SelectItem value="paket">paket</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
