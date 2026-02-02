@@ -78,6 +78,54 @@ serve(async (req) => {
 
     console.log(`Order ${order_id} status updated to ${status} by user ${user.id}`);
 
+    // Deduct stock when order is accepted (status = processing)
+    if (status === 'processing' && oldStatus === 'pending') {
+      const { data: product, error: productError } = await supabaseClient
+        .from('products')
+        .select('stock_quantity')
+        .eq('id', order.product_id)
+        .single();
+
+      if (!productError && product) {
+        const newStock = Math.max(0, (product.stock_quantity || 0) - order.quantity);
+        
+        const { error: stockError } = await supabaseClient
+          .from('products')
+          .update({ stock_quantity: newStock })
+          .eq('id', order.product_id);
+
+        if (stockError) {
+          console.error('Error updating stock:', stockError);
+        } else {
+          console.log(`Stock updated for product ${order.product_id}: ${product.stock_quantity} -> ${newStock}`);
+        }
+      }
+    }
+
+    // Restore stock when order is cancelled (if it was already accepted)
+    if (status === 'cancelled' && oldStatus === 'processing') {
+      const { data: product, error: productError } = await supabaseClient
+        .from('products')
+        .select('stock_quantity')
+        .eq('id', order.product_id)
+        .single();
+
+      if (!productError && product) {
+        const newStock = (product.stock_quantity || 0) + order.quantity;
+        
+        const { error: stockError } = await supabaseClient
+          .from('products')
+          .update({ stock_quantity: newStock })
+          .eq('id', order.product_id);
+
+        if (stockError) {
+          console.error('Error restoring stock:', stockError);
+        } else {
+          console.log(`Stock restored for product ${order.product_id}: ${product.stock_quantity} -> ${newStock}`);
+        }
+      }
+    }
+
     // Send email notification if status changed
     if (oldStatus !== status) {
       try {
