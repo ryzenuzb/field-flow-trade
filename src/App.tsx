@@ -11,6 +11,7 @@ import AdminLogin from "./pages/AdminLogin";
 import Chat from "./pages/Chat";
 import Profile from "./pages/Profile";
 import FarmerDashboard from "./pages/FarmerDashboard";
+import FarmerApplication from "./pages/FarmerApplication";
 import OrderHistory from "./pages/OrderHistory";
 import NotFound from "./pages/NotFound";
 
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/chat" element={<Chat />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/farmer" element={<FarmerDashboard />} />
+          <Route path="/farmer/apply" element={<FarmerApplication />} />
           <Route path="/orders" element={<OrderHistory />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
