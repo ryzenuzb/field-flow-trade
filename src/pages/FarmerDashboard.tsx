@@ -742,13 +742,31 @@ const FarmerDashboard = () => {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="location">Joylashuv</Label>
-              <Input
-                id="location"
+              <Label htmlFor="location">Viloyat</Label>
+              <Select
                 value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                placeholder="Toshkent vil."
-              />
+                onValueChange={(value) => setFormData({ ...formData, location: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Viloyatni tanlang" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Toshkent shahri">Toshkent shahri</SelectItem>
+                  <SelectItem value="Toshkent viloyati">Toshkent viloyati</SelectItem>
+                  <SelectItem value="Andijon viloyati">Andijon viloyati</SelectItem>
+                  <SelectItem value="Buxoro viloyati">Buxoro viloyati</SelectItem>
+                  <SelectItem value="Farg'ona viloyati">Farg'ona viloyati</SelectItem>
+                  <SelectItem value="Jizzax viloyati">Jizzax viloyati</SelectItem>
+                  <SelectItem value="Xorazm viloyati">Xorazm viloyati</SelectItem>
+                  <SelectItem value="Namangan viloyati">Namangan viloyati</SelectItem>
+                  <SelectItem value="Navoiy viloyati">Navoiy viloyati</SelectItem>
+                  <SelectItem value="Qashqadaryo viloyati">Qashqadaryo viloyati</SelectItem>
+                  <SelectItem value="Qoraqalpog'iston">Qoraqalpog'iston</SelectItem>
+                  <SelectItem value="Samarqand viloyati">Samarqand viloyati</SelectItem>
+                  <SelectItem value="Sirdaryo viloyati">Sirdaryo viloyati</SelectItem>
+                  <SelectItem value="Surxondaryo viloyati">Surxondaryo viloyati</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid gap-2">
