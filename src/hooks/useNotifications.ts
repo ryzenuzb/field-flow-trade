@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { playNotificationSound } from "@/lib/notificationSound";
 
 const statusLabels: Record<string, string> = {
   pending: "Kutilmoqda",
@@ -65,6 +66,7 @@ export const useNotifications = ({ userId, isFarmer }: NotificationHookProps) =>
             const productName = product?.title || "Mahsulot";
             const statusLabel = statusLabels[newStatus] || newStatus;
 
+            playNotificationSound(newStatus === 'cancelled' ? 'warning' : 'success');
             toast({
               title: "📦 Buyurtma holati yangilandi",
               description: `"${productName}" buyurtmangiz holati: ${statusLabel}`,
@@ -106,6 +108,7 @@ export const useNotifications = ({ userId, isFarmer }: NotificationHookProps) =>
             const quantity = payload.new.quantity;
             const totalPrice = payload.new.total_price;
 
+            playNotificationSound('order');
             toast({
               title: "🎉 Yangi buyurtma keldi!",
               description: `"${productName}" - ${quantity} dona, ${totalPrice.toLocaleString()} so'm`,
@@ -141,6 +144,7 @@ export const useNotifications = ({ userId, isFarmer }: NotificationHookProps) =>
 
           // Alert when stock drops below 5
           if (newStock < 5 && oldStock >= 5) {
+            playNotificationSound('warning');
             toast({
               title: "⚠️ Zaxira kam qoldi!",
               description: `"${productName}" - faqat ${newStock} dona qoldi`,
@@ -150,6 +154,7 @@ export const useNotifications = ({ userId, isFarmer }: NotificationHookProps) =>
 
           // Alert when stock reaches 0
           if (newStock === 0 && oldStock > 0) {
+            playNotificationSound('warning');
             toast({
               title: "🚫 Zaxira tugadi!",
               description: `"${productName}" zaxirasi tugadi. Yangilang!`,
@@ -201,6 +206,7 @@ export const useNotifications = ({ userId, isFarmer }: NotificationHookProps) =>
               const messagePreview = (payload.new.content as string).slice(0, 50) + 
                 ((payload.new.content as string).length > 50 ? "..." : "");
 
+              playNotificationSound('message');
               toast({
                 title: `💬 ${senderName} xabar yubordi`,
                 description: messagePreview,
