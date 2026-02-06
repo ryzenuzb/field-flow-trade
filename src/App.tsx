@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { OrderNotificationProvider } from "@/components/OrderNotificationProvider";
+import { NotificationProvider } from "@/components/NotificationProvider";
 import Index from "./pages/Index";
 import Marketplace from "./pages/Marketplace";
 import Auth from "./pages/Auth";
@@ -19,7 +19,7 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <OrderNotificationProvider>
+    <NotificationProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
@@ -38,7 +38,7 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
-    </OrderNotificationProvider>
+    </NotificationProvider>
   </QueryClientProvider>
 );
 
