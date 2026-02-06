@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Plus, Edit, Trash2, Package, ShoppingCart, TrendingUp, DollarSign, Upload, X, Check, XCircle, Truck, PackageCheck } from "lucide-react";
+import { Plus, Edit, Trash2, Package, ShoppingCart, TrendingUp, DollarSign, Upload, X, Check, XCircle, Truck, PackageCheck, ArrowLeft, Home, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import { CropCalendar } from "@/components/CropCalendar";
 
@@ -402,6 +402,38 @@ const FarmerDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Navigation Bar */}
+      <div className="bg-white/95 backdrop-blur-sm border-b border-border sticky top-0 z-50 shadow-soft">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14">
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => navigate(-1)}
+                className="gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Ortga
+              </Button>
+              <div className="h-4 w-px bg-border" />
+              <Link to="/">
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <Home className="w-4 h-4" />
+                  Bosh sahifa
+                </Button>
+              </Link>
+              <Link to="/chat">
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <MessageCircle className="w-4 h-4" />
+                  Chat
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="section-field border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex justify-between items-center">
