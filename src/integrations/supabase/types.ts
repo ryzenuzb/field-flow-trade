@@ -850,6 +850,137 @@ export type Database = {
         }
         Relationships: []
       }
+      soil_analysis_results: {
+        Row: {
+          additional_notes: string | null
+          analyzed_by: string | null
+          created_at: string
+          crop_recommendations: string[] | null
+          fertility_score: number | null
+          fertilizer_suggestions: string[] | null
+          id: string
+          moisture_level: number | null
+          nitrogen_level: string | null
+          ph_level: number | null
+          phosphorus_level: string | null
+          potassium_level: string | null
+          request_id: string
+          soil_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          additional_notes?: string | null
+          analyzed_by?: string | null
+          created_at?: string
+          crop_recommendations?: string[] | null
+          fertility_score?: number | null
+          fertilizer_suggestions?: string[] | null
+          id?: string
+          moisture_level?: number | null
+          nitrogen_level?: string | null
+          ph_level?: number | null
+          phosphorus_level?: string | null
+          potassium_level?: string | null
+          request_id: string
+          soil_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          additional_notes?: string | null
+          analyzed_by?: string | null
+          created_at?: string
+          crop_recommendations?: string[] | null
+          fertility_score?: number | null
+          fertilizer_suggestions?: string[] | null
+          id?: string
+          moisture_level?: number | null
+          nitrogen_level?: string | null
+          ph_level?: number | null
+          phosphorus_level?: string | null
+          potassium_level?: string | null
+          request_id?: string
+          soil_type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "soil_analysis_results_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "soil_inspection_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      soil_inspection_requests: {
+        Row: {
+          analysis_price: number | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          farmer_id: string
+          id: string
+          land_size: number
+          land_size_unit: string
+          latitude: number | null
+          location_name: string | null
+          longitude: number | null
+          needs_analysis: boolean | null
+          notes: string | null
+          payment_status: string | null
+          previous_crops: string[] | null
+          status: string
+          updated_at: string
+          visit_notes: string | null
+          visited_at: string | null
+          visited_by: string | null
+        }
+        Insert: {
+          analysis_price?: number | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          farmer_id: string
+          id?: string
+          land_size: number
+          land_size_unit?: string
+          latitude?: number | null
+          location_name?: string | null
+          longitude?: number | null
+          needs_analysis?: boolean | null
+          notes?: string | null
+          payment_status?: string | null
+          previous_crops?: string[] | null
+          status?: string
+          updated_at?: string
+          visit_notes?: string | null
+          visited_at?: string | null
+          visited_by?: string | null
+        }
+        Update: {
+          analysis_price?: number | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          farmer_id?: string
+          id?: string
+          land_size?: number
+          land_size_unit?: string
+          latitude?: number | null
+          location_name?: string | null
+          longitude?: number | null
+          needs_analysis?: boolean | null
+          notes?: string | null
+          payment_status?: string | null
+          previous_crops?: string[] | null
+          status?: string
+          updated_at?: string
+          visit_notes?: string | null
+          visited_at?: string | null
+          visited_by?: string | null
+        }
+        Relationships: []
+      }
       subscription_plans: {
         Row: {
           ai_queries_limit: number | null

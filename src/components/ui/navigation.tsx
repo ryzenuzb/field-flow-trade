@@ -13,7 +13,8 @@ import {
   Home,
   Tractor,
   ClipboardList,
-  LogOut
+  LogOut,
+  Microscope
 } from "lucide-react";
 
 const Navigation = () => {
@@ -56,6 +57,7 @@ const Navigation = () => {
     { name: "Fermer Paneli", href: "/farmer", icon: Tractor, farmerAllowed: true, requiresAuth: true },
     { name: "Chat", href: "/chat", icon: MessageCircle, farmerAllowed: true, requiresAuth: true },
     { name: "Profil", href: "/profile", icon: User, farmerAllowed: false, requiresAuth: true },
+    { name: "Tuproq Tahlili", href: "/soil-check", icon: Microscope, farmerAllowed: true, requiresAuth: false },
   ];
 
   const navItems = allNavItems.filter(item => {
