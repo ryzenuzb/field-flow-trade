@@ -18,6 +18,7 @@ import { AdvancedFilters, FilterState } from "@/components/admin/AdvancedFilters
 import { ProductCategoryChart } from "@/components/admin/ProductCategoryChart";
 import { OrderStatusChart } from "@/components/admin/OrderStatusChart";
 import { RegionalStats } from "@/components/admin/RegionalStats";
+import AdminSoilPanel from "@/components/soil/AdminSoilPanel";
 
 interface UserProfile {
   id: string;
@@ -435,6 +436,9 @@ const Admin = () => {
                 Asboblar
               </TabsTrigger>
             )}
+            <TabsTrigger value="soil" className="data-[state=active]:bg-background">
+              🔬 Tuproq
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
@@ -495,6 +499,10 @@ const Admin = () => {
               </div>
             </TabsContent>
           )}
+
+          <TabsContent value="soil">
+            <AdminSoilPanel />
+          </TabsContent>
         </Tabs>
       </main>
     </div>
