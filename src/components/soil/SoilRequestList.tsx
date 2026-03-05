@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { MapPin, Calendar, Leaf, Beaker } from "lucide-react";
+import { MapPin, Calendar, Leaf, Beaker, Download } from "lucide-react";
+import jsPDF from "jspdf";
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   requested: { label: "So'rov yuborildi", color: "bg-blue-100 text-blue-700 border-blue-200" },
@@ -30,6 +31,7 @@ interface AnalysisResult {
 const SoilRequestList = ({ userId }: { userId: string }) => {
   const [requests, setRequests] = useState<any[]>([]);
   const [selectedResult, setSelectedResult] = useState<AnalysisResult | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchRequests = async () => {
@@ -48,7 +50,94 @@ const SoilRequestList = ({ userId }: { userId: string }) => {
       .select("*")
       .eq("request_id", requestId)
       .single();
-    if (data) setSelectedResult(data as any);
+    if (data) {
+      setSelectedResult(data as any);
+      setSelectedRequest(requests.find((r) => r.id === requestId) || null);
+    }
+  };
+
+  const downloadPDF = () => {
+    if (!selectedResult) return;
+    const doc = new jsPDF();
+    const req = selectedRequest;
+    let y = 20;
+
+    doc.setFontSize(18);
+    doc.text("Tuproq Tahlil Natijasi", 105, y, { align: "center" });
+    y += 10;
+    doc.setFontSize(10);
+    doc.text("Farm Trade - Soil Check", 105, y, { align: "center" });
+    y += 15;
+
+    doc.setDrawColor(34, 139, 34);
+    doc.line(20, y, 190, y);
+    y += 10;
+
+    if (req) {
+      doc.setFontSize(12);
+      doc.text("Yer ma'lumotlari:", 20, y);
+      y += 8;
+      doc.setFontSize(10);
+      if (req.location_name) { doc.text(`Joylashuv: ${req.location_name}`, 25, y); y += 6; }
+      doc.text(`Maydon: ${req.land_size} ${req.land_size_unit}`, 25, y); y += 6;
+      if (req.previous_crops?.length) {
+        doc.text(`Oldingi ekinlar: ${(req.previous_crops as string[]).join(", ")}`, 25, y); y += 6;
+      }
+      doc.text(`Sana: ${new Date(req.created_at).toLocaleDateString("uz-UZ")}`, 25, y); y += 12;
+    }
+
+    // Fertility score
+    doc.setFontSize(14);
+    doc.text(`Unumdorlik: ${selectedResult.fertility_score}%`, 20, y);
+    y += 12;
+
+    // Main metrics table
+    doc.setFontSize(10);
+    const metrics = [
+      ["Tuproq turi", selectedResult.soil_type || "—"],
+      ["pH daraja", selectedResult.ph_level?.toString() || "—"],
+      ["Namlik", selectedResult.moisture_level ? `${selectedResult.moisture_level}%` : "—"],
+      ["Azot (N)", selectedResult.nitrogen_level || "—"],
+      ["Fosfor (P)", selectedResult.phosphorus_level || "—"],
+      ["Kaliy (K)", selectedResult.potassium_level || "—"],
+    ];
+
+    metrics.forEach(([label, value]) => {
+      doc.setFont("helvetica", "bold");
+      doc.text(`${label}:`, 25, y);
+      doc.setFont("helvetica", "normal");
+      doc.text(value, 80, y);
+      y += 7;
+    });
+    y += 5;
+
+    if (selectedResult.crop_recommendations?.length) {
+      doc.setFontSize(12);
+      doc.text("Tavsiya etiladigan ekinlar:", 20, y);
+      y += 7;
+      doc.setFontSize(10);
+      doc.text(selectedResult.crop_recommendations.join(", "), 25, y, { maxWidth: 160 });
+      y += 10;
+    }
+
+    if (selectedResult.fertilizer_suggestions?.length) {
+      doc.setFontSize(12);
+      doc.text("Tavsiya etiladigan o'g'itlar:", 20, y);
+      y += 7;
+      doc.setFontSize(10);
+      doc.text(selectedResult.fertilizer_suggestions.join(", "), 25, y, { maxWidth: 160 });
+      y += 10;
+    }
+
+    if (selectedResult.additional_notes) {
+      doc.setFontSize(12);
+      doc.text("Qo'shimcha eslatmalar:", 20, y);
+      y += 7;
+      doc.setFontSize(10);
+      doc.text(selectedResult.additional_notes, 25, y, { maxWidth: 160 });
+    }
+
+    doc.save(`tuproq-tahlil-${new Date().toISOString().split("T")[0]}.pdf`);
   };
 
   useEffect(() => {
@@ -119,8 +208,12 @@ const SoilRequestList = ({ userId }: { userId: string }) => {
       {/* Analysis Result Dialog */}
       <Dialog open={!!selectedResult} onOpenChange={() => setSelectedResult(null)}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+          <DialogHeader className="flex flex-row items-center justify-between">
             <DialogTitle className="text-xl font-poppins">🔬 Tuproq Tahlil Natijasi</DialogTitle>
+            <Button size="sm" variant="outline" onClick={downloadPDF} className="gap-2">
+              <Download className="w-4 h-4" />
+              PDF
+            </Button>
           </DialogHeader>
           {selectedResult && (
             <div className="space-y-4">
