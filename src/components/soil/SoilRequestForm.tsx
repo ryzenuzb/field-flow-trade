@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,14 +7,30 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { UZBEKISTAN_REGIONS } from "@/lib/validations/farm";
-import { MapPin, Loader2 } from "lucide-react";
+import { MapPin, Loader2, Navigation } from "lucide-react";
+import LocationMap from "./LocationMap";
 
 interface Props {
   userId: string;
   open: boolean;
   onClose: () => void;
 }
+
+const reverseGeocode = async (lat: number, lng: number): Promise<string | null> => {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uz`
+    );
+    const data = await res.json();
+    if (data?.address) {
+      const { state, county, town, village, city } = data.address;
+      return [village || town || city, county, state].filter(Boolean).join(", ");
+    }
+    return data?.display_name || null;
+  } catch {
+    return null;
+  }
+};
 
 const SoilRequestForm = ({ userId, open, onClose }: Props) => {
   const { toast } = useToast();
@@ -32,6 +48,8 @@ const SoilRequestForm = ({ userId, open, onClose }: Props) => {
     notes: "",
   });
 
+  const hasCoords = !!form.latitude && !!form.longitude;
+
   const getGPS = () => {
     if (!navigator.geolocation) {
       toast({ title: "GPS mavjud emas", variant: "destructive" });
@@ -39,20 +57,36 @@ const SoilRequestForm = ({ userId, open, onClose }: Props) => {
     }
     setGpsLoading(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const locationName = await reverseGeocode(lat, lng);
         setForm((f) => ({
           ...f,
-          latitude: pos.coords.latitude.toFixed(6),
-          longitude: pos.coords.longitude.toFixed(6),
+          latitude: lat.toFixed(6),
+          longitude: lng.toFixed(6),
+          location_name: locationName || f.location_name,
         }));
         setGpsLoading(false);
+        toast({ title: "📍 Joylashuv aniqlandi!", description: locationName || `${lat.toFixed(4)}, ${lng.toFixed(4)}` });
       },
       () => {
         toast({ title: "GPS xatosi", description: "Joylashuvni aniqlab bo'lmadi", variant: "destructive" });
         setGpsLoading(false);
-      }
+      },
+      { enableHighAccuracy: true }
     );
   };
+
+  const handleMapDrag = useCallback(async (lat: number, lng: number) => {
+    const locationName = await reverseGeocode(lat, lng);
+    setForm((f) => ({
+      ...f,
+      latitude: lat.toFixed(6),
+      longitude: lng.toFixed(6),
+      location_name: locationName || f.location_name,
+    }));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,16 +134,30 @@ const SoilRequestForm = ({ userId, open, onClose }: Props) => {
             </div>
           </div>
 
-          <div>
+          {/* GPS Section */}
+          <div className="space-y-2">
             <Label>Yer joylashuvi</Label>
             <div className="flex gap-2">
               <Input value={form.location_name} onChange={(e) => setForm({ ...form, location_name: e.target.value })} placeholder="Viloyat, tuman, qishloq" className="flex-1" />
-              <Button type="button" variant="outline" size="icon" onClick={getGPS} disabled={gpsLoading}>
-                {gpsLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
+              <Button type="button" variant="outline" onClick={getGPS} disabled={gpsLoading} className="gap-2 shrink-0">
+                {gpsLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Navigation className="w-4 h-4" />}
+                GPS
               </Button>
             </div>
-            {form.latitude && (
-              <p className="text-xs text-muted-foreground mt-1">📍 {form.latitude}, {form.longitude}</p>
+            {hasCoords && (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <MapPin className="w-3 h-3" /> {form.latitude}, {form.longitude}
+                </p>
+                <LocationMap
+                  lat={parseFloat(form.latitude)}
+                  lng={parseFloat(form.longitude)}
+                  draggable
+                  onPositionChange={handleMapDrag}
+                  className="h-48 w-full rounded-lg border border-border"
+                />
+                <p className="text-xs text-muted-foreground">📌 Markerni sudrab aniq joylashuvni belgilang</p>
+              </div>
             )}
           </div>
 
