@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MapPin, Calendar, Leaf, Beaker, Download } from "lucide-react";
 import jsPDF from "jspdf";
+import LocationMap from "./LocationMap";
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   requested: { label: "So'rov yuborildi", color: "bg-blue-100 text-blue-700 border-blue-200" },
@@ -68,7 +69,6 @@ const SoilRequestList = ({ userId }: { userId: string }) => {
     doc.setFontSize(10);
     doc.text("Farm Trade - Soil Check", 105, y, { align: "center" });
     y += 15;
-
     doc.setDrawColor(34, 139, 34);
     doc.line(20, y, 190, y);
     y += 10;
@@ -79,6 +79,7 @@ const SoilRequestList = ({ userId }: { userId: string }) => {
       y += 8;
       doc.setFontSize(10);
       if (req.location_name) { doc.text(`Joylashuv: ${req.location_name}`, 25, y); y += 6; }
+      if (req.latitude && req.longitude) { doc.text(`GPS: ${req.latitude}, ${req.longitude}`, 25, y); y += 6; }
       doc.text(`Maydon: ${req.land_size} ${req.land_size_unit}`, 25, y); y += 6;
       if (req.previous_crops?.length) {
         doc.text(`Oldingi ekinlar: ${(req.previous_crops as string[]).join(", ")}`, 25, y); y += 6;
@@ -86,12 +87,10 @@ const SoilRequestList = ({ userId }: { userId: string }) => {
       doc.text(`Sana: ${new Date(req.created_at).toLocaleDateString("uz-UZ")}`, 25, y); y += 12;
     }
 
-    // Fertility score
     doc.setFontSize(14);
     doc.text(`Unumdorlik: ${selectedResult.fertility_score}%`, 20, y);
     y += 12;
 
-    // Main metrics table
     doc.setFontSize(10);
     const metrics = [
       ["Tuproq turi", selectedResult.soil_type || "—"],
@@ -160,8 +159,20 @@ const SoilRequestList = ({ userId }: { userId: string }) => {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {requests.map((req) => {
           const status = statusConfig[req.status] || statusConfig.requested;
+          const hasCoords = req.latitude && req.longitude;
           return (
-            <Card key={req.id} className="product-card">
+            <Card key={req.id} className="product-card overflow-hidden">
+              {/* Mini map for requests with GPS */}
+              {hasCoords && (
+                <div className="h-32 w-full">
+                  <LocationMap
+                    lat={Number(req.latitude)}
+                    lng={Number(req.longitude)}
+                    zoom={12}
+                    className="h-32 w-full"
+                  />
+                </div>
+              )}
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
                   <CardTitle className="text-lg">{req.location_name || "Yer maydoni"}</CardTitle>
@@ -169,6 +180,12 @@ const SoilRequestList = ({ userId }: { userId: string }) => {
                 </div>
               </CardHeader>
               <CardContent className="space-y-2">
+                {hasCoords && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <MapPin className="w-3 h-3 text-primary" />
+                    <span>{Number(req.latitude).toFixed(4)}, {Number(req.longitude).toFixed(4)}</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <MapPin className="w-4 h-4" />
                   <span>{req.land_size} {req.land_size_unit}</span>
@@ -217,7 +234,15 @@ const SoilRequestList = ({ userId }: { userId: string }) => {
           </DialogHeader>
           {selectedResult && (
             <div className="space-y-4">
-              {/* Fertility Score */}
+              {/* Map in result dialog */}
+              {selectedRequest?.latitude && selectedRequest?.longitude && (
+                <LocationMap
+                  lat={Number(selectedRequest.latitude)}
+                  lng={Number(selectedRequest.longitude)}
+                  className="h-40 w-full rounded-lg border border-border"
+                />
+              )}
+
               <div className="text-center py-4">
                 <div className="text-5xl font-bold text-primary mb-1">{selectedResult.fertility_score}%</div>
                 <p className="text-muted-foreground">Unumdorlik ko'rsatkichi</p>
