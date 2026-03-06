@@ -8,6 +8,7 @@ interface LocationMapProps {
   zoom?: number;
   className?: string;
   draggable?: boolean;
+  clickable?: boolean;
   onPositionChange?: (lat: number, lng: number) => void;
 }
 
@@ -19,7 +20,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
 });
 
-const LocationMap = ({ lat, lng, zoom = 13, className = "h-48 w-full rounded-lg", draggable = false, onPositionChange }: LocationMapProps) => {
+const LocationMap = ({ lat, lng, zoom = 13, className = "h-48 w-full rounded-lg", draggable = false, clickable = false, onPositionChange }: LocationMapProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
@@ -38,6 +39,14 @@ const LocationMap = ({ lat, lng, zoom = 13, className = "h-48 w-full rounded-lg"
       marker.on("dragend", () => {
         const pos = marker.getLatLng();
         onPositionChange(pos.lat, pos.lng);
+      });
+    }
+
+    if (clickable && onPositionChange) {
+      map.on("click", (e: L.LeafletMouseEvent) => {
+        const { lat: newLat, lng: newLng } = e.latlng;
+        marker.setLatLng([newLat, newLng]);
+        onPositionChange(newLat, newLng);
       });
     }
 
