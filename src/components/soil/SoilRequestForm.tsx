@@ -144,11 +144,30 @@ const SoilRequestForm = ({ userId, open, onClose }: Props) => {
                 GPS
               </Button>
             </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs text-muted-foreground">Latitude</Label>
+                <Input
+                  type="number"
+                  step="0.000001"
+                  value={form.latitude}
+                  onChange={(e) => setForm({ ...form, latitude: e.target.value })}
+                  placeholder="41.311081"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Longitude</Label>
+                <Input
+                  type="number"
+                  step="0.000001"
+                  value={form.longitude}
+                  onChange={(e) => setForm({ ...form, longitude: e.target.value })}
+                  placeholder="69.240562"
+                />
+              </div>
+            </div>
             {hasCoords && (
               <div className="space-y-2">
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <MapPin className="w-3 h-3" /> {form.latitude}, {form.longitude}
-                </p>
                 <LocationMap
                   lat={parseFloat(form.latitude)}
                   lng={parseFloat(form.longitude)}
