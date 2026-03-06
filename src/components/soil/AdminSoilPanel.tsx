@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MapPin, Phone, User, Loader2, Eye, CheckCircle, Beaker } from "lucide-react";
+import { MapPin, Phone, User, Loader2, Eye, CheckCircle, Beaker, Map } from "lucide-react";
+import RouteMap from "./RouteMap";
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   requested: { label: "Yangi", color: "bg-blue-100 text-blue-700" },
@@ -27,6 +28,7 @@ const AdminSoilPanel = () => {
   const [selected, setSelected] = useState<any | null>(null);
   const [showAnalysisForm, setShowAnalysisForm] = useState(false);
   const [analysisTarget, setAnalysisTarget] = useState<string>("");
+  const [routeTarget, setRouteTarget] = useState<any | null>(null);
   const [saving, setSaving] = useState(false);
 
   const [visitForm, setVisitForm] = useState({ visit_notes: "", needs_analysis: "yes", analysis_price: "" });
@@ -146,6 +148,11 @@ const AdminSoilPanel = () => {
                   <TableCell>{new Date(req.created_at).toLocaleDateString("uz-UZ")}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
+                      {req.latitude && req.longitude && (
+                        <Button size="sm" variant="outline" onClick={() => setRouteTarget(req)}>
+                          <Map className="w-4 h-4 mr-1" /> Harita
+                        </Button>
+                      )}
                       {req.status === "requested" && (
                         <Button size="sm" variant="outline" onClick={() => setSelected(req)}>
                           <CheckCircle className="w-4 h-4 mr-1" /> Tekshirdim
@@ -284,6 +291,22 @@ const AdminSoilPanel = () => {
               Tahlil natijasini saqlash
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Route Map Dialog */}
+      <Dialog open={!!routeTarget} onOpenChange={() => setRouteTarget(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>🗺️ Yo'nalish — {routeTarget?.contact_name}</DialogTitle>
+          </DialogHeader>
+          {routeTarget && routeTarget.latitude && routeTarget.longitude && (
+            <RouteMap
+              destLat={routeTarget.latitude}
+              destLng={routeTarget.longitude}
+              destName={routeTarget.location_name || routeTarget.contact_name}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>
