@@ -166,18 +166,18 @@ const SoilRequestForm = ({ userId, open, onClose }: Props) => {
                 />
               </div>
             </div>
-            {hasCoords && (
-              <div className="space-y-2">
-                <LocationMap
-                  lat={parseFloat(form.latitude)}
-                  lng={parseFloat(form.longitude)}
-                  draggable
-                  onPositionChange={handleMapDrag}
-                  className="h-48 w-full rounded-lg border border-border"
-                />
-                <p className="text-xs text-muted-foreground">📌 Markerni sudrab aniq joylashuvni belgilang</p>
-              </div>
-            )}
+            <div className="space-y-2">
+              <LocationMap
+                lat={hasCoords ? parseFloat(form.latitude) : 41.311081}
+                lng={hasCoords ? parseFloat(form.longitude) : 69.240562}
+                zoom={hasCoords ? 13 : 6}
+                draggable
+                clickable
+                onPositionChange={handleMapDrag}
+                className="h-56 w-full rounded-lg border border-border"
+              />
+              <p className="text-xs text-muted-foreground">📌 Xaritadan bosib yoki markerni sudrab joylashuvni tanlang</p>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
