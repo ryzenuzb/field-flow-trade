@@ -14,7 +14,8 @@ import {
   Tractor,
   ClipboardList,
   LogOut,
-  Microscope
+  Microscope,
+  GraduationCap
 } from "lucide-react";
 
 const Navigation = () => {
