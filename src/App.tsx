@@ -14,7 +14,7 @@ import FarmerDashboard from "./pages/FarmerDashboard";
 import FarmerApplication from "./pages/FarmerApplication";
 import OrderHistory from "./pages/OrderHistory";
 import SoilCheck from "./pages/SoilCheck";
-import FarmerAcademy from "./pages/FarmerAcademy";
+
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
