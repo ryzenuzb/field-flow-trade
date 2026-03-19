@@ -58,7 +58,7 @@ const Navigation = () => {
     { name: "Chat", href: "/chat", icon: MessageCircle, farmerAllowed: true, requiresAuth: true },
     { name: "Profil", href: "/profile", icon: User, farmerAllowed: false, requiresAuth: true },
     { name: "Tuproq Tahlili", href: "/soil-check", icon: Microscope, farmerAllowed: true, requiresAuth: false },
-    { name: "Akademiya", href: "/academy", icon: GraduationCap, farmerAllowed: true, requiresAuth: false },
+    
   ];
 
   const navItems = allNavItems.filter(item => {
