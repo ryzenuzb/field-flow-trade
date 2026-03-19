@@ -15,7 +15,6 @@ import {
   ClipboardList,
   LogOut,
   Microscope,
-  GraduationCap
 } from "lucide-react";
 
 const Navigation = () => {
