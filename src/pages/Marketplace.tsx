@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Filter, SlidersHorizontal, ShoppingBag, Loader2 } from "lucide-react";
+import { Search, Filter, SlidersHorizontal, ShoppingBag, Loader2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import ProductCard from "@/components/ui/product-card";
@@ -21,6 +22,9 @@ interface Product {
   location: string | null;
   category: string;
   stock_quantity: number | null;
+  description: string | null;
+  profiles?: { full_name: string; location: string | null } | null;
+  reviews?: { rating: number }[];
 }
 
 const Marketplace = () => {
@@ -36,6 +40,10 @@ const Marketplace = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
+  const [maxPrice, setMaxPrice] = useState(10000000);
+  const [selectedLocation, setSelectedLocation] = useState("all");
 
   useEffect(() => {
     checkAuthAndRole();
@@ -46,13 +54,10 @@ const Marketplace = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       setIsAuthenticated(true);
-      
-      // Check if user is a farmer
       const { data: roles } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id);
-      
       if (roles && roles.some(r => r.role === 'farmer')) {
         toast({
           title: "Ruxsat yo'q",
@@ -70,13 +75,26 @@ const Marketplace = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select(`
+          *,
+          profiles:seller_id (full_name, location),
+          reviews (rating)
+        `)
         .eq('is_active', true)
+        .is('deleted_at', null)
+        .gt('stock_quantity', 0)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
       setProducts(data || []);
+      
+      // Calculate max price for slider
+      if (data && data.length > 0) {
+        const max = Math.max(...data.map(p => p.price));
+        setMaxPrice(max);
+        setPriceRange([0, max]);
+      }
     } catch (error) {
       console.error('Mahsulotlarni yuklashda xatolik:', error);
       toast({
@@ -88,6 +106,81 @@ const Marketplace = () => {
       setLoading(false);
     }
   };
+
+  // Get unique locations from products
+  const locations = useMemo(() => {
+    const locs = new Set(products.map(p => p.location).filter(Boolean) as string[]);
+    return Array.from(locs).sort();
+  }, [products]);
+
+  // Apply all filters and sorting
+  const filteredProducts = useMemo(() => {
+    let result = [...products];
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter(p =>
+        p.title.toLowerCase().includes(q) ||
+        (p.description && p.description.toLowerCase().includes(q)) ||
+        (p.location && p.location.toLowerCase().includes(q)) ||
+        (p.profiles && typeof p.profiles === 'object' && 'full_name' in p.profiles && p.profiles.full_name?.toLowerCase().includes(q))
+      );
+    }
+
+    // Category filter
+    if (selectedCategory !== "all") {
+      result = result.filter(p => p.category.toLowerCase() === selectedCategory.toLowerCase());
+    }
+
+    // Location filter
+    if (selectedLocation !== "all") {
+      result = result.filter(p => p.location === selectedLocation);
+    }
+
+    // Price range filter
+    result = result.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
+
+    // Sorting
+    switch (sortBy) {
+      case "price-low":
+        result.sort((a, b) => a.price - b.price);
+        break;
+      case "price-high":
+        result.sort((a, b) => b.price - a.price);
+        break;
+      case "rating":
+        result.sort((a, b) => {
+          const avgA = a.reviews?.length ? a.reviews.reduce((s, r) => s + r.rating, 0) / a.reviews.length : 0;
+          const avgB = b.reviews?.length ? b.reviews.reduce((s, r) => s + r.rating, 0) / b.reviews.length : 0;
+          return avgB - avgA;
+        });
+        break;
+      case "recent":
+      default:
+        // Already sorted by created_at desc from DB
+        break;
+    }
+
+    return result;
+  }, [products, searchQuery, selectedCategory, sortBy, selectedLocation, priceRange]);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (selectedCategory !== "all") count++;
+    if (selectedLocation !== "all") count++;
+    if (searchQuery.trim()) count++;
+    if (priceRange[0] > 0 || priceRange[1] < maxPrice) count++;
+    return count;
+  }, [selectedCategory, selectedLocation, searchQuery, priceRange, maxPrice]);
+
+  const clearAllFilters = useCallback(() => {
+    setSearchQuery("");
+    setSelectedCategory("all");
+    setSelectedLocation("all");
+    setSortBy("recent");
+    setPriceRange([0, maxPrice]);
+  }, [maxPrice]);
 
 
   const categories = [
