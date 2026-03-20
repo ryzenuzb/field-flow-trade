@@ -302,6 +302,16 @@ const Marketplace = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                  onClick={() => setSearchQuery("")}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
             </div>
 
             {/* Category Filter */}
@@ -325,24 +335,105 @@ const Marketplace = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="recent">Yangi qo'shilgan</SelectItem>
-                <SelectItem value="price-low">Narx: Kam</SelectItem>
-                <SelectItem value="price-high">Narx: Yuqori</SelectItem>
-                <SelectItem value="rating">Reyting</SelectItem>
+                <SelectItem value="price-low">Narx: Kam → Yuqori</SelectItem>
+                <SelectItem value="price-high">Narx: Yuqori → Kam</SelectItem>
+                <SelectItem value="rating">Reyting bo'yicha</SelectItem>
               </SelectContent>
             </Select>
 
-            <Button variant="outline" className="h-12 px-6">
+            <Button
+              variant={showAdvancedFilters ? "default" : "outline"}
+              className="h-12 px-6"
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            >
               <SlidersHorizontal className="w-4 h-4 mr-2" />
               Filtrlar
+              {activeFilterCount > 0 && (
+                <Badge variant="secondary" className="ml-2 bg-primary/20 text-primary text-xs">
+                  {activeFilterCount}
+                </Badge>
+              )}
             </Button>
           </div>
 
+          {/* Advanced Filters */}
+          {showAdvancedFilters && (
+            <div className="mt-4 pt-4 border-t border-border space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Location filter */}
+                <div className="space-y-2">
+                  <Label>Joylashuv</Label>
+                  <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Hudud tanlang" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Barcha hududlar</SelectItem>
+                      {locations.map((loc) => (
+                        <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Price range */}
+                <div className="space-y-2">
+                  <Label>
+                    Narx oralig'i: {priceRange[0].toLocaleString()} — {priceRange[1].toLocaleString()} so'm
+                  </Label>
+                  <Slider
+                    value={priceRange}
+                    onValueChange={(val) => setPriceRange(val as [number, number])}
+                    min={0}
+                    max={maxPrice}
+                    step={Math.max(1000, Math.floor(maxPrice / 100))}
+                    className="mt-2"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+                  <X className="w-4 h-4 mr-1" />
+                  Filtrlarni tozalash
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Active filters */}
           <div className="flex flex-wrap gap-2 mt-4">
-            <Badge variant="secondary" className="bg-primary/10 text-primary">
-              <Filter className="w-3 h-3 mr-1" />
-              Barcha mahsulotlar
-            </Badge>
+            {activeFilterCount === 0 ? (
+              <Badge variant="secondary" className="bg-primary/10 text-primary">
+                <Filter className="w-3 h-3 mr-1" />
+                Barcha mahsulotlar ({filteredProducts.length})
+              </Badge>
+            ) : (
+              <>
+                <Badge variant="secondary" className="bg-primary/10 text-primary">
+                  <Filter className="w-3 h-3 mr-1" />
+                  {filteredProducts.length} ta natija
+                </Badge>
+                {selectedCategory !== "all" && (
+                  <Badge variant="outline" className="cursor-pointer" onClick={() => setSelectedCategory("all")}>
+                    {categories.find(c => c.value === selectedCategory)?.label}
+                    <X className="w-3 h-3 ml-1" />
+                  </Badge>
+                )}
+                {selectedLocation !== "all" && (
+                  <Badge variant="outline" className="cursor-pointer" onClick={() => setSelectedLocation("all")}>
+                    {selectedLocation}
+                    <X className="w-3 h-3 ml-1" />
+                  </Badge>
+                )}
+                {searchQuery.trim() && (
+                  <Badge variant="outline" className="cursor-pointer" onClick={() => setSearchQuery("")}>
+                    "{searchQuery}"
+                    <X className="w-3 h-3 ml-1" />
+                  </Badge>
+                )}
+              </>
+            )}
           </div>
         </div>
 
@@ -351,31 +442,44 @@ const Marketplace = () => {
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
-        ) : products.length === 0 ? (
-          <div className="text-center py-20">
+        ) : filteredProducts.length === 0 ? (
+          <div className="text-center py-20 space-y-4">
             <p className="text-lg text-muted-foreground">
-              Hozircha mahsulotlar yo'q
+              {products.length === 0 ? "Hozircha mahsulotlar yo'q" : "Filtrga mos mahsulot topilmadi"}
             </p>
+            {activeFilterCount > 0 && (
+              <Button variant="outline" onClick={clearAllFilters}>
+                Filtrlarni tozalash
+              </Button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                id={product.id}
-                name={product.title}
-                price={product.price}
-                unit={product.unit}
-                image={product.image_url || ''}
-                seller="Fermer"
-                location={product.location || 'Noma\'lum'}
-                rating={4.5}
-                category={product.category}
-                inStock={!!product.stock_quantity && product.stock_quantity > 0}
-                onFavoriteToggle={handleFavoriteToggle}
-                onAddToCart={handleAddToCart}
-              />
-            ))}
+            {filteredProducts.map((product) => {
+              const avgRating = product.reviews?.length
+                ? Math.round((product.reviews.reduce((s, r) => s + r.rating, 0) / product.reviews.length) * 10) / 10
+                : 0;
+              const sellerName = product.profiles && typeof product.profiles === 'object' && 'full_name' in product.profiles
+                ? product.profiles.full_name
+                : "Fermer";
+              return (
+                <ProductCard
+                  key={product.id}
+                  id={product.id}
+                  name={product.title}
+                  price={product.price}
+                  unit={product.unit}
+                  image={product.image_url || ''}
+                  seller={sellerName}
+                  location={product.location || "Noma'lum"}
+                  rating={avgRating}
+                  category={product.category}
+                  inStock={!!product.stock_quantity && product.stock_quantity > 0}
+                  onFavoriteToggle={handleFavoriteToggle}
+                  onAddToCart={handleAddToCart}
+                />
+              );
+            })}
           </div>
         )}
 
