@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Filter, SlidersHorizontal, ShoppingBag, Loader2 } from "lucide-react";
+import { Search, Filter, SlidersHorizontal, ShoppingBag, Loader2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import ProductCard from "@/components/ui/product-card";
@@ -21,6 +22,9 @@ interface Product {
   location: string | null;
   category: string;
   stock_quantity: number | null;
+  description: string | null;
+  profiles?: { full_name: string; location: string | null } | null;
+  reviews?: { rating: number }[];
 }
 
 const Marketplace = () => {
@@ -36,6 +40,10 @@ const Marketplace = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
+  const [maxPrice, setMaxPrice] = useState(10000000);
+  const [selectedLocation, setSelectedLocation] = useState("all");
 
   useEffect(() => {
     checkAuthAndRole();
@@ -46,13 +54,10 @@ const Marketplace = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       setIsAuthenticated(true);
-      
-      // Check if user is a farmer
       const { data: roles } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id);
-      
       if (roles && roles.some(r => r.role === 'farmer')) {
         toast({
           title: "Ruxsat yo'q",
@@ -70,13 +75,39 @@ const Marketplace = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select(`
+          *,
+          reviews (rating)
+        `)
         .eq('is_active', true)
+        .is('deleted_at', null)
+        .gt('stock_quantity', 0)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      setProducts(data || []);
+      // Fetch seller profiles separately
+      const sellerIds = [...new Set((data || []).map(p => p.seller_id))];
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, location')
+        .in('user_id', sellerIds);
+
+      const profileMap = new Map((profilesData || []).map(p => [p.user_id, p]));
+
+      const enriched = (data || []).map(p => ({
+        ...p,
+        profiles: profileMap.get(p.seller_id) || null,
+      }));
+
+      setProducts(enriched as Product[]);
+      
+      // Calculate max price for slider
+      if (data && data.length > 0) {
+        const max = Math.max(...data.map(p => p.price));
+        setMaxPrice(max);
+        setPriceRange([0, max]);
+      }
     } catch (error) {
       console.error('Mahsulotlarni yuklashda xatolik:', error);
       toast({
@@ -88,6 +119,81 @@ const Marketplace = () => {
       setLoading(false);
     }
   };
+
+  // Get unique locations from products
+  const locations = useMemo(() => {
+    const locs = new Set(products.map(p => p.location).filter(Boolean) as string[]);
+    return Array.from(locs).sort();
+  }, [products]);
+
+  // Apply all filters and sorting
+  const filteredProducts = useMemo(() => {
+    let result = [...products];
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter(p =>
+        p.title.toLowerCase().includes(q) ||
+        (p.description && p.description.toLowerCase().includes(q)) ||
+        (p.location && p.location.toLowerCase().includes(q)) ||
+        (p.profiles && typeof p.profiles === 'object' && 'full_name' in p.profiles && p.profiles.full_name?.toLowerCase().includes(q))
+      );
+    }
+
+    // Category filter
+    if (selectedCategory !== "all") {
+      result = result.filter(p => p.category.toLowerCase() === selectedCategory.toLowerCase());
+    }
+
+    // Location filter
+    if (selectedLocation !== "all") {
+      result = result.filter(p => p.location === selectedLocation);
+    }
+
+    // Price range filter
+    result = result.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
+
+    // Sorting
+    switch (sortBy) {
+      case "price-low":
+        result.sort((a, b) => a.price - b.price);
+        break;
+      case "price-high":
+        result.sort((a, b) => b.price - a.price);
+        break;
+      case "rating":
+        result.sort((a, b) => {
+          const avgA = a.reviews?.length ? a.reviews.reduce((s, r) => s + r.rating, 0) / a.reviews.length : 0;
+          const avgB = b.reviews?.length ? b.reviews.reduce((s, r) => s + r.rating, 0) / b.reviews.length : 0;
+          return avgB - avgA;
+        });
+        break;
+      case "recent":
+      default:
+        // Already sorted by created_at desc from DB
+        break;
+    }
+
+    return result;
+  }, [products, searchQuery, selectedCategory, sortBy, selectedLocation, priceRange]);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (selectedCategory !== "all") count++;
+    if (selectedLocation !== "all") count++;
+    if (searchQuery.trim()) count++;
+    if (priceRange[0] > 0 || priceRange[1] < maxPrice) count++;
+    return count;
+  }, [selectedCategory, selectedLocation, searchQuery, priceRange, maxPrice]);
+
+  const clearAllFilters = useCallback(() => {
+    setSearchQuery("");
+    setSelectedCategory("all");
+    setSelectedLocation("all");
+    setSortBy("recent");
+    setPriceRange([0, maxPrice]);
+  }, [maxPrice]);
 
 
   const categories = [
@@ -196,6 +302,16 @@ const Marketplace = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                  onClick={() => setSearchQuery("")}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
             </div>
 
             {/* Category Filter */}
@@ -219,24 +335,105 @@ const Marketplace = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="recent">Yangi qo'shilgan</SelectItem>
-                <SelectItem value="price-low">Narx: Kam</SelectItem>
-                <SelectItem value="price-high">Narx: Yuqori</SelectItem>
-                <SelectItem value="rating">Reyting</SelectItem>
+                <SelectItem value="price-low">Narx: Kam → Yuqori</SelectItem>
+                <SelectItem value="price-high">Narx: Yuqori → Kam</SelectItem>
+                <SelectItem value="rating">Reyting bo'yicha</SelectItem>
               </SelectContent>
             </Select>
 
-            <Button variant="outline" className="h-12 px-6">
+            <Button
+              variant={showAdvancedFilters ? "default" : "outline"}
+              className="h-12 px-6"
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            >
               <SlidersHorizontal className="w-4 h-4 mr-2" />
               Filtrlar
+              {activeFilterCount > 0 && (
+                <Badge variant="secondary" className="ml-2 bg-primary/20 text-primary text-xs">
+                  {activeFilterCount}
+                </Badge>
+              )}
             </Button>
           </div>
 
+          {/* Advanced Filters */}
+          {showAdvancedFilters && (
+            <div className="mt-4 pt-4 border-t border-border space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Location filter */}
+                <div className="space-y-2">
+                  <Label>Joylashuv</Label>
+                  <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Hudud tanlang" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Barcha hududlar</SelectItem>
+                      {locations.map((loc) => (
+                        <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Price range */}
+                <div className="space-y-2">
+                  <Label>
+                    Narx oralig'i: {priceRange[0].toLocaleString()} — {priceRange[1].toLocaleString()} so'm
+                  </Label>
+                  <Slider
+                    value={priceRange}
+                    onValueChange={(val) => setPriceRange(val as [number, number])}
+                    min={0}
+                    max={maxPrice}
+                    step={Math.max(1000, Math.floor(maxPrice / 100))}
+                    className="mt-2"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+                  <X className="w-4 h-4 mr-1" />
+                  Filtrlarni tozalash
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Active filters */}
           <div className="flex flex-wrap gap-2 mt-4">
-            <Badge variant="secondary" className="bg-primary/10 text-primary">
-              <Filter className="w-3 h-3 mr-1" />
-              Barcha mahsulotlar
-            </Badge>
+            {activeFilterCount === 0 ? (
+              <Badge variant="secondary" className="bg-primary/10 text-primary">
+                <Filter className="w-3 h-3 mr-1" />
+                Barcha mahsulotlar ({filteredProducts.length})
+              </Badge>
+            ) : (
+              <>
+                <Badge variant="secondary" className="bg-primary/10 text-primary">
+                  <Filter className="w-3 h-3 mr-1" />
+                  {filteredProducts.length} ta natija
+                </Badge>
+                {selectedCategory !== "all" && (
+                  <Badge variant="outline" className="cursor-pointer" onClick={() => setSelectedCategory("all")}>
+                    {categories.find(c => c.value === selectedCategory)?.label}
+                    <X className="w-3 h-3 ml-1" />
+                  </Badge>
+                )}
+                {selectedLocation !== "all" && (
+                  <Badge variant="outline" className="cursor-pointer" onClick={() => setSelectedLocation("all")}>
+                    {selectedLocation}
+                    <X className="w-3 h-3 ml-1" />
+                  </Badge>
+                )}
+                {searchQuery.trim() && (
+                  <Badge variant="outline" className="cursor-pointer" onClick={() => setSearchQuery("")}>
+                    "{searchQuery}"
+                    <X className="w-3 h-3 ml-1" />
+                  </Badge>
+                )}
+              </>
+            )}
           </div>
         </div>
 
@@ -245,31 +442,44 @@ const Marketplace = () => {
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
-        ) : products.length === 0 ? (
-          <div className="text-center py-20">
+        ) : filteredProducts.length === 0 ? (
+          <div className="text-center py-20 space-y-4">
             <p className="text-lg text-muted-foreground">
-              Hozircha mahsulotlar yo'q
+              {products.length === 0 ? "Hozircha mahsulotlar yo'q" : "Filtrga mos mahsulot topilmadi"}
             </p>
+            {activeFilterCount > 0 && (
+              <Button variant="outline" onClick={clearAllFilters}>
+                Filtrlarni tozalash
+              </Button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                id={product.id}
-                name={product.title}
-                price={product.price}
-                unit={product.unit}
-                image={product.image_url || ''}
-                seller="Fermer"
-                location={product.location || 'Noma\'lum'}
-                rating={4.5}
-                category={product.category}
-                inStock={!!product.stock_quantity && product.stock_quantity > 0}
-                onFavoriteToggle={handleFavoriteToggle}
-                onAddToCart={handleAddToCart}
-              />
-            ))}
+            {filteredProducts.map((product) => {
+              const avgRating = product.reviews?.length
+                ? Math.round((product.reviews.reduce((s, r) => s + r.rating, 0) / product.reviews.length) * 10) / 10
+                : 0;
+              const sellerName = product.profiles && typeof product.profiles === 'object' && 'full_name' in product.profiles
+                ? product.profiles.full_name
+                : "Fermer";
+              return (
+                <ProductCard
+                  key={product.id}
+                  id={product.id}
+                  name={product.title}
+                  price={product.price}
+                  unit={product.unit}
+                  image={product.image_url || ''}
+                  seller={sellerName}
+                  location={product.location || "Noma'lum"}
+                  rating={avgRating}
+                  category={product.category}
+                  inStock={!!product.stock_quantity && product.stock_quantity > 0}
+                  onFavoriteToggle={handleFavoriteToggle}
+                  onAddToCart={handleAddToCart}
+                />
+              );
+            })}
           </div>
         )}
 
