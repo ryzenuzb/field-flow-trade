@@ -118,46 +118,6 @@ const Admin = () => {
     checkAdminAccess();
   }, []);
 
-  // Real-time subscriptions for admin dashboard
-  useEffect(() => {
-    if (!isAdmin) return;
-
-    const ordersChannel = supabase
-      .channel('admin-orders-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
-        loadData();
-      })
-      .subscribe();
-
-    const productsChannel = supabase
-      .channel('admin-products-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
-        loadData();
-      })
-      .subscribe();
-
-    const usersChannel = supabase
-      .channel('admin-users-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
-        loadData();
-      })
-      .subscribe();
-
-    const verificationsChannel = supabase
-      .channel('admin-verifications-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'seller_verifications' }, () => {
-        loadData();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(ordersChannel);
-      supabase.removeChannel(productsChannel);
-      supabase.removeChannel(usersChannel);
-      supabase.removeChannel(verificationsChannel);
-    };
-  }, [isAdmin, loadData]);
-
   const checkAdminAccess = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
