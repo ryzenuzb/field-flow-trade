@@ -44,6 +44,8 @@ const Marketplace = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
   const [maxPrice, setMaxPrice] = useState(10000000);
   const [selectedLocation, setSelectedLocation] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
 
   useEffect(() => {
     checkAuthAndRole();
@@ -177,6 +179,18 @@ const Marketplace = () => {
 
     return result;
   }, [products, searchQuery, selectedCategory, sortBy, selectedLocation, priceRange]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredProducts.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredProducts, currentPage]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, sortBy, selectedLocation, priceRange]);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -455,7 +469,7 @@ const Marketplace = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredProducts.map((product) => {
+            {paginatedProducts.map((product) => {
               const avgRating = product.reviews?.length
                 ? Math.round((product.reviews.reduce((s, r) => s + r.rating, 0) / product.reviews.length) * 10) / 10
                 : 0;
@@ -483,12 +497,50 @@ const Marketplace = () => {
           </div>
         )}
 
-        {/* Load More */}
-        <div className="text-center mt-12">
-          <Button className="btn-farm px-8 py-3">
-            Ko'proq yuklash
-          </Button>
-        </div>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-8">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              Oldingi
+            </Button>
+            {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+              let page: number;
+              if (totalPages <= 7) {
+                page = i + 1;
+              } else if (currentPage <= 4) {
+                page = i + 1;
+              } else if (currentPage >= totalPages - 3) {
+                page = totalPages - 6 + i;
+              } else {
+                page = currentPage - 3 + i;
+              }
+              return (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCurrentPage(page)}
+                  className="w-9"
+                >
+                  {page}
+                </Button>
+              );
+            })}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Keyingi
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Order Dialog */}

@@ -16,25 +16,32 @@ interface NotificationHookProps {
   isFarmer: boolean;
 }
 
+const saveNotification = async (
+  userId: string,
+  title: string,
+  message: string,
+  type: string,
+  link?: string
+) => {
+  await supabase.from("notifications").insert({
+    user_id: userId,
+    title,
+    message,
+    type,
+    link,
+  });
+};
+
 export const useNotifications = ({ userId, isFarmer }: NotificationHookProps) => {
   const { toast } = useToast();
   const [farmerProductIds, setFarmerProductIds] = useState<string[]>([]);
 
-  // Fetch farmer's product IDs for order notifications
   useEffect(() => {
     if (!userId || !isFarmer) return;
-
     const fetchProducts = async () => {
-      const { data } = await supabase
-        .from('products')
-        .select('id')
-        .eq('seller_id', userId);
-      
-      if (data) {
-        setFarmerProductIds(data.map(p => p.id));
-      }
+      const { data } = await supabase.from("products").select("id").eq("seller_id", userId);
+      if (data) setFarmerProductIds(data.map((p) => p.id));
     };
-
     fetchProducts();
   }, [userId, isFarmer]);
 
@@ -43,84 +50,81 @@ export const useNotifications = ({ userId, isFarmer }: NotificationHookProps) =>
     if (!userId || isFarmer) return;
 
     const channel = supabase
-      .channel('buyer-order-status')
+      .channel("buyer-order-status")
       .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'orders',
-          filter: `buyer_id=eq.${userId}`,
-        },
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "orders", filter: `buyer_id=eq.${userId}` },
         async (payload) => {
           const newStatus = payload.new.status as string;
           const oldStatus = payload.old.status as string;
-          
           if (newStatus !== oldStatus) {
             const { data: product } = await supabase
-              .from('products')
-              .select('title')
-              .eq('id', payload.new.product_id)
+              .from("products")
+              .select("title")
+              .eq("id", payload.new.product_id)
               .single();
-
             const productName = product?.title || "Mahsulot";
             const statusLabel = statusLabels[newStatus] || newStatus;
 
-            playNotificationSound(newStatus === 'cancelled' ? 'warning' : 'success');
+            playNotificationSound(newStatus === "cancelled" ? "warning" : "success");
             toast({
               title: "📦 Buyurtma holati yangilandi",
               description: `"${productName}" buyurtmangiz holati: ${statusLabel}`,
-              variant: newStatus === 'cancelled' ? 'destructive' : 'default',
+              variant: newStatus === "cancelled" ? "destructive" : "default",
             });
+
+            await saveNotification(
+              userId,
+              "Buyurtma holati yangilandi",
+              `"${productName}" holati: ${statusLabel}`,
+              "order",
+              "/orders"
+            );
           }
         }
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [userId, isFarmer, toast]);
 
-  // Farmer: New orders received
+  // Farmer: New orders
   useEffect(() => {
     if (!userId || !isFarmer || farmerProductIds.length === 0) return;
 
     const channel = supabase
-      .channel('farmer-new-orders')
+      .channel("farmer-new-orders")
       .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'orders',
-        },
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "orders" },
         async (payload) => {
-          // Check if order is for farmer's product
           if (farmerProductIds.includes(payload.new.product_id)) {
             const { data: product } = await supabase
-              .from('products')
-              .select('title')
-              .eq('id', payload.new.product_id)
+              .from("products")
+              .select("title")
+              .eq("id", payload.new.product_id)
               .single();
-
             const productName = product?.title || "Mahsulot";
-            const quantity = payload.new.quantity;
-            const totalPrice = payload.new.total_price;
 
-            playNotificationSound('order');
+            playNotificationSound("success");
             toast({
-              title: "🎉 Yangi buyurtma keldi!",
-              description: `"${productName}" - ${quantity} dona, ${totalPrice.toLocaleString()} so'm`,
+              title: "🛒 Yangi buyurtma!",
+              description: `"${productName}" uchun ${payload.new.quantity} dona buyurtma keldi`,
             });
+
+            await saveNotification(
+              userId,
+              "Yangi buyurtma!",
+              `"${productName}" uchun ${payload.new.quantity} dona buyurtma`,
+              "order",
+              "/farmer"
+            );
           }
         }
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [userId, isFarmer, farmerProductIds, toast]);
 
   // Farmer: Low stock alerts
@@ -128,97 +132,84 @@ export const useNotifications = ({ userId, isFarmer }: NotificationHookProps) =>
     if (!userId || !isFarmer) return;
 
     const channel = supabase
-      .channel('farmer-stock-alerts')
+      .channel("farmer-stock-alerts")
       .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'products',
-          filter: `seller_id=eq.${userId}`,
-        },
-        (payload) => {
-          const newStock = payload.new.stock_quantity as number;
-          const oldStock = payload.old.stock_quantity as number;
-          const productName = payload.new.title as string;
-
-          // Alert when stock drops below 5
-          if (newStock < 5 && oldStock >= 5) {
-            playNotificationSound('warning');
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "products" },
+        async (payload) => {
+          if (
+            payload.new.seller_id === userId &&
+            payload.new.stock_quantity !== null &&
+            payload.new.stock_quantity < 5 &&
+            payload.new.stock_quantity !== payload.old.stock_quantity
+          ) {
+            playNotificationSound("warning");
             toast({
-              title: "⚠️ Zaxira kam qoldi!",
-              description: `"${productName}" - faqat ${newStock} dona qoldi`,
+              title: "⚠️ Zaxira kam!",
+              description: `"${payload.new.title}" mahsulotingiz zaxirasi ${payload.new.stock_quantity} ta qoldi`,
               variant: "destructive",
             });
-          }
 
-          // Alert when stock reaches 0
-          if (newStock === 0 && oldStock > 0) {
-            playNotificationSound('warning');
-            toast({
-              title: "🚫 Zaxira tugadi!",
-              description: `"${productName}" zaxirasi tugadi. Yangilang!`,
-              variant: "destructive",
-            });
+            await saveNotification(
+              userId,
+              "Zaxira kam!",
+              `"${payload.new.title}" zaxirasi ${payload.new.stock_quantity} ta qoldi`,
+              "stock",
+              "/farmer"
+            );
           }
         }
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [userId, isFarmer, toast]);
 
-  // New chat messages
+  // Chat message notifications
   useEffect(() => {
     if (!userId) return;
 
     const channel = supabase
-      .channel('new-messages')
+      .channel("chat-notifications")
       .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'private_messages',
-        },
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "private_messages" },
         async (payload) => {
-          // Only notify if message is not from current user
           if (payload.new.sender_id !== userId) {
-            // Check if user is participant in this room
-            const { data: participation } = await supabase
-              .from('chat_participants')
-              .select('room_id')
-              .eq('room_id', payload.new.room_id)
-              .eq('user_id', userId)
-              .single();
+            const { data: participant } = await supabase
+              .from("chat_participants")
+              .select("room_id")
+              .eq("room_id", payload.new.room_id)
+              .eq("user_id", userId)
+              .maybeSingle();
 
-            if (participation) {
-              // Get sender name
+            if (participant) {
               const { data: sender } = await supabase
-                .from('profiles')
-                .select('full_name')
-                .eq('user_id', payload.new.sender_id)
+                .from("profiles")
+                .select("full_name")
+                .eq("user_id", payload.new.sender_id)
                 .single();
-
               const senderName = sender?.full_name || "Foydalanuvchi";
-              const messagePreview = (payload.new.content as string).slice(0, 50) + 
-                ((payload.new.content as string).length > 50 ? "..." : "");
 
-              playNotificationSound('message');
+              playNotificationSound("message");
               toast({
-                title: `💬 ${senderName} xabar yubordi`,
-                description: messagePreview,
+                title: "💬 Yangi xabar",
+                description: `${senderName}: ${payload.new.content.substring(0, 50)}${payload.new.content.length > 50 ? "..." : ""}`,
               });
+
+              await saveNotification(
+                userId,
+                "Yangi xabar",
+                `${senderName}: ${payload.new.content.substring(0, 100)}`,
+                "message",
+                "/chat"
+              );
             }
           }
         }
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [userId, toast]);
 };

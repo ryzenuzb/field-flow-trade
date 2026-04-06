@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { NotificationBell } from "@/components/NotificationBell";
 import { 
   Sprout, 
   ShoppingCart, 
@@ -21,6 +22,7 @@ const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isFarmer, setIsFarmer] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userId, setUserId] = useState<string | undefined>();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -32,6 +34,7 @@ const Navigation = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       setIsAuthenticated(true);
+      setUserId(user.id);
       const { data: roles } = await supabase
         .from('user_roles')
         .select('role')
@@ -47,6 +50,7 @@ const Navigation = () => {
     await supabase.auth.signOut();
     setIsAuthenticated(false);
     setIsFarmer(false);
+    setUserId(undefined);
     navigate('/');
   };
 
@@ -56,15 +60,12 @@ const Navigation = () => {
     { name: "Buyurtmalar", href: "/orders", icon: ClipboardList, farmerAllowed: false, requiresAuth: true },
     { name: "Fermer Paneli", href: "/farmer", icon: Tractor, farmerAllowed: true, requiresAuth: true },
     { name: "Chat", href: "/chat", icon: MessageCircle, farmerAllowed: true, requiresAuth: true },
-    { name: "Profil", href: "/profile", icon: User, farmerAllowed: false, requiresAuth: true },
+    { name: "Profil", href: "/profile", icon: User, farmerAllowed: true, requiresAuth: true },
     { name: "Tuproq Tahlili", href: "/soil-check", icon: Microscope, farmerAllowed: true, requiresAuth: false },
-    
   ];
 
   const navItems = allNavItems.filter(item => {
-    // Hide items that require auth if user is not authenticated
     if (item.requiresAuth && !isAuthenticated) return false;
-    // Hide items not allowed for farmers
     if (isFarmer && !item.farmerAllowed) return false;
     return true;
   });
@@ -108,6 +109,7 @@ const Navigation = () => {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-3">
+            {isAuthenticated && <NotificationBell userId={userId} />}
             {isFarmer && (
               <Badge variant="secondary" className="bg-accent text-accent-foreground">
                 Fermer
@@ -121,84 +123,73 @@ const Navigation = () => {
             ) : (
               <>
                 <Link to="/auth">
-                  <Button variant="outline" size="sm">
-                    Kirish
-                  </Button>
+                  <Button variant="outline" size="sm">Kirish</Button>
                 </Link>
                 <Link to="/auth">
-                  <Button className="btn-farm" size="sm">
-                    Ro'yxatdan o'tish
-                  </Button>
+                  <Button className="btn-farm" size="sm">Ro'yxatdan o'tish</Button>
                 </Link>
               </>
             )}
           </div>
 
           {/* Mobile menu trigger */}
-          <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="md:hidden"
-              >
-                <Menu className="w-5 h-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[280px] sm:w-[350px]">
-              <div className="flex flex-col space-y-4 mt-8">
-                <div className="flex items-center space-x-2 pb-4 border-b border-border">
-                  <div className="w-8 h-8 bg-gradient-to-r from-primary to-primary-light rounded-lg flex items-center justify-center">
-                    <Sprout className="w-5 h-5 text-white" />
+          <div className="md:hidden flex items-center gap-2">
+            {isAuthenticated && <NotificationBell userId={userId} />}
+            <Sheet open={isOpen} onOpenChange={setIsOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <Menu className="w-5 h-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[280px] sm:w-[350px]">
+                <div className="flex flex-col space-y-4 mt-8">
+                  <div className="flex items-center space-x-2 pb-4 border-b border-border">
+                    <div className="w-8 h-8 bg-gradient-to-r from-primary to-primary-light rounded-lg flex items-center justify-center">
+                      <Sprout className="w-5 h-5 text-white" />
+                    </div>
+                    <span className="text-xl font-poppins font-bold gradient-text">FarmTrade</span>
                   </div>
-                  <span className="text-xl font-poppins font-bold gradient-text">
-                    FarmTrade
-                  </span>
-                </div>
-                
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <Link
-                      key={item.name}
-                      to={item.href}
-                      onClick={() => setIsOpen(false)}
-                      className={`flex items-center space-x-3 px-4 py-3 rounded-lg font-inter font-medium transition-all duration-200 ${
-                        isActive(item.href)
-                          ? "bg-primary text-white shadow-green"
-                          : "text-foreground hover:bg-primary/10 hover:text-primary"
-                      }`}
-                    >
-                      <Icon className="w-5 h-5" />
-                      <span>{item.name}</span>
-                    </Link>
-                  );
-                })}
-                
-                <div className="pt-6 border-t border-border space-y-3">
-                  {isAuthenticated ? (
-                    <Button variant="outline" className="w-full" onClick={() => { handleLogout(); setIsOpen(false); }}>
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Chiqish
-                    </Button>
-                  ) : (
-                    <>
-                      <Link to="/auth" onClick={() => setIsOpen(false)}>
-                        <Button variant="outline" className="w-full">
-                          Kirish
-                        </Button>
+                  
+                  {navItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.name}
+                        to={item.href}
+                        onClick={() => setIsOpen(false)}
+                        className={`flex items-center space-x-3 px-4 py-3 rounded-lg font-inter font-medium transition-all duration-200 ${
+                          isActive(item.href)
+                            ? "bg-primary text-white shadow-green"
+                            : "text-foreground hover:bg-primary/10 hover:text-primary"
+                        }`}
+                      >
+                        <Icon className="w-5 h-5" />
+                        <span>{item.name}</span>
                       </Link>
-                      <Link to="/auth" onClick={() => setIsOpen(false)}>
-                        <Button className="btn-farm w-full">
-                          Ro'yxatdan o'tish
-                        </Button>
-                      </Link>
-                    </>
-                  )}
+                    );
+                  })}
+                  
+                  <div className="pt-6 border-t border-border space-y-3">
+                    {isAuthenticated ? (
+                      <Button variant="outline" className="w-full" onClick={() => { handleLogout(); setIsOpen(false); }}>
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Chiqish
+                      </Button>
+                    ) : (
+                      <>
+                        <Link to="/auth" onClick={() => setIsOpen(false)}>
+                          <Button variant="outline" className="w-full">Kirish</Button>
+                        </Link>
+                        <Link to="/auth" onClick={() => setIsOpen(false)}>
+                          <Button className="btn-farm w-full">Ro'yxatdan o'tish</Button>
+                        </Link>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </SheetContent>
-          </Sheet>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </div>
     </nav>
