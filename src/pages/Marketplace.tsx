@@ -44,6 +44,8 @@ const Marketplace = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
   const [maxPrice, setMaxPrice] = useState(10000000);
   const [selectedLocation, setSelectedLocation] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
 
   useEffect(() => {
     checkAuthAndRole();
