@@ -180,6 +180,18 @@ const Marketplace = () => {
     return result;
   }, [products, searchQuery, selectedCategory, sortBy, selectedLocation, priceRange]);
 
+  // Pagination
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredProducts.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredProducts, currentPage]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, sortBy, selectedLocation, priceRange]);
+
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (selectedCategory !== "all") count++;
