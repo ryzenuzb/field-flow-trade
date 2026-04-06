@@ -469,7 +469,7 @@ const Marketplace = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredProducts.map((product) => {
+            {paginatedProducts.map((product) => {
               const avgRating = product.reviews?.length
                 ? Math.round((product.reviews.reduce((s, r) => s + r.rating, 0) / product.reviews.length) * 10) / 10
                 : 0;
@@ -497,12 +497,50 @@ const Marketplace = () => {
           </div>
         )}
 
-        {/* Load More */}
-        <div className="text-center mt-12">
-          <Button className="btn-farm px-8 py-3">
-            Ko'proq yuklash
-          </Button>
-        </div>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-8">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              Oldingi
+            </Button>
+            {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+              let page: number;
+              if (totalPages <= 7) {
+                page = i + 1;
+              } else if (currentPage <= 4) {
+                page = i + 1;
+              } else if (currentPage >= totalPages - 3) {
+                page = totalPages - 6 + i;
+              } else {
+                page = currentPage - 3 + i;
+              }
+              return (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCurrentPage(page)}
+                  className="w-9"
+                >
+                  {page}
+                </Button>
+              );
+            })}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Keyingi
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Order Dialog */}
