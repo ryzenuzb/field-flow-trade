@@ -1,0 +1,1 @@
+ALTER TABLE public.daily_metrics ADD CONSTRAINT daily_metrics_date_unique UNIQUE (date);
