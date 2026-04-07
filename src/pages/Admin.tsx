@@ -482,7 +482,7 @@ const Admin = () => {
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
-            <AdminStats stats={stats} />
+            <AdminStats stats={stats} dailyMetrics={dailyMetrics} />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <RevenueChart dailyMetrics={dailyMetrics} />
               <OrderStatusChart orders={orders} />
