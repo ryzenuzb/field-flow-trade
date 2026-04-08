@@ -136,6 +136,7 @@ const Navigation = () => {
 
           {/* Mobile menu trigger */}
           <div className="md:hidden flex items-center gap-2">
+            <ThemeToggle />
             {isAuthenticated && <NotificationBell userId={userId} />}
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
