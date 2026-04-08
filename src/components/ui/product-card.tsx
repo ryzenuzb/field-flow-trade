@@ -40,6 +40,7 @@ const ProductCard = ({
         <img
           src={image}
           alt={name}
+          loading="lazy"
           className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
         />
         
