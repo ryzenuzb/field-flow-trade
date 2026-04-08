@@ -110,6 +110,7 @@ const Navigation = () => {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-3">
+            <ThemeToggle />
             {isAuthenticated && <NotificationBell userId={userId} />}
             {isFarmer && (
               <Badge variant="secondary" className="bg-accent text-accent-foreground">
