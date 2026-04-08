@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Plus } from "lucide-react";
+import { compressImage } from "@/lib/imageCompression";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
