@@ -143,17 +143,28 @@ const FarmerDashboard = () => {
     setProductDialogOpen(true);
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast({ title: "Xatolik", description: "Rasm hajmi 5MB dan oshmasligi kerak", variant: "destructive" });
+      if (file.size > 10 * 1024 * 1024) {
+        toast({ title: "Xatolik", description: "Rasm hajmi 10MB dan oshmasligi kerak", variant: "destructive" });
         return;
       }
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => setImagePreview(reader.result as string);
-      reader.readAsDataURL(file);
+      try {
+        const compressed = await compressImage(file, { maxWidth: 1200, maxHeight: 1200, quality: 0.8, maxSizeMB: 1 });
+        setImageFile(compressed);
+        const reader = new FileReader();
+        reader.onloadend = () => setImagePreview(reader.result as string);
+        reader.readAsDataURL(compressed);
+        if (compressed.size < file.size) {
+          toast({ title: "Rasm optimizatsiya qilindi", description: `${(file.size / 1024).toFixed(0)}KB → ${(compressed.size / 1024).toFixed(0)}KB` });
+        }
+      } catch {
+        setImageFile(file);
+        const reader = new FileReader();
+        reader.onloadend = () => setImagePreview(reader.result as string);
+        reader.readAsDataURL(file);
+      }
     }
   };
 
