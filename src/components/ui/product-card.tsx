@@ -40,6 +40,7 @@ const ProductCard = ({
         <img
           src={image}
           alt={name}
+          loading="lazy"
           className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
         />
         
@@ -52,7 +53,7 @@ const ProductCard = ({
         <Button
           variant="ghost"
           size="sm"
-          className="absolute top-3 right-3 bg-white/90 hover:bg-white p-2 w-auto h-auto"
+          className="absolute top-3 right-3 bg-background/90 hover:bg-background p-2 w-auto h-auto"
           onClick={() => onFavoriteToggle?.(id)}
         >
           <Heart
