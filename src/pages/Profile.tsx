@@ -13,6 +13,7 @@ import { User, Mail, Phone, MapPin, Save, Edit, Package, Loader2 } from "lucide-
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { ReferralCard } from "@/components/ReferralCard";
 
 const Profile = () => {
   const { toast } = useToast();
@@ -237,6 +238,9 @@ const Profile = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Referral panel */}
+        {auth.user && <ReferralCard userId={auth.user.id} />}
 
         {/* Orders History */}
         <Card className="mt-6">
