@@ -290,6 +290,20 @@ const Auth = () => {
                         onChange={(e) => setLocation(e.target.value)}
                       />
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-referral" className="flex items-center gap-2">
+                        <Gift className="w-4 h-4 text-primary" />
+                        Taklif kodi (ixtiyoriy)
+                      </Label>
+                      <Input
+                        id="signup-referral"
+                        type="text"
+                        value={referralCode}
+                        onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                        placeholder="ABCD1234"
+                        maxLength={8}
+                      />
+                    </div>
                     <Button type="submit" className="w-full" disabled={loading}>
                       {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       Ro'yxatdan o'tish
