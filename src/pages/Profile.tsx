@@ -239,6 +239,9 @@ const Profile = () => {
           </CardContent>
         </Card>
 
+        {/* Referral panel */}
+        {auth.user && <ReferralCard userId={auth.user.id} />}
+
         {/* Orders History */}
         <Card className="mt-6">
           <CardHeader>
