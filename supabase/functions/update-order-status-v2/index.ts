@@ -194,6 +194,39 @@ serve(async (req) => {
         .eq('order_id', body.order_id);
     }
 
+    // Send email notification to buyer (best-effort, do not fail on error)
+    try {
+      const { data: buyerProfile } = await serviceClient
+        .from('profiles')
+        .select('email, full_name')
+        .eq('user_id', order.buyer_id)
+        .maybeSingle();
+
+      if (buyerProfile?.email) {
+        await fetch(
+          `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-order-notification`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+            },
+            body: JSON.stringify({
+              order_id: body.order_id,
+              new_status: body.status,
+              buyer_email: buyerProfile.email,
+              buyer_name: buyerProfile.full_name || "Mijoz",
+              product_title: order.products?.title || "Mahsulot",
+              quantity: order.quantity,
+              total_price: Number(order.total_price),
+            }),
+          }
+        );
+      }
+    } catch (emailErr) {
+      console.error("Email notification failed (non-fatal):", emailErr);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
