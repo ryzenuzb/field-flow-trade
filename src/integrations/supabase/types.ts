@@ -670,6 +670,8 @@ export type Database = {
           is_blocked: boolean | null
           location: string | null
           phone: string | null
+          referral_code: string | null
+          referred_by: string | null
           updated_at: string
           user_id: string
         }
@@ -684,6 +686,8 @@ export type Database = {
           is_blocked?: boolean | null
           location?: string | null
           phone?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
           updated_at?: string
           user_id: string
         }
@@ -698,10 +702,20 @@ export type Database = {
           is_blocked?: boolean | null
           location?: string | null
           phone?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       rate_limits: {
         Row: {
@@ -1145,6 +1159,7 @@ export type Database = {
         Returns: string
       }
       create_order_chat: { Args: { p_order_id: string }; Returns: string }
+      generate_referral_code: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
