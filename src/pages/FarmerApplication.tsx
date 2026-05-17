@@ -302,22 +302,28 @@ const FarmerApplication = () => {
                       <SelectValue placeholder="Hujjat turini tanlang" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="identity">
+                      <SelectItem value="id_card">
                         <div className="flex items-center gap-2">
                           <Shield className="w-4 h-4" />
                           Shaxsni tasdiqlash (Pasport/ID)
                         </div>
                       </SelectItem>
-                      <SelectItem value="farm">
+                      <SelectItem value="farm_photo">
                         <div className="flex items-center gap-2">
                           <Tractor className="w-4 h-4" />
-                          Ferma hujjatlari
+                          Ferma hujjatlari/rasmi
                         </div>
                       </SelectItem>
-                      <SelectItem value="business">
+                      <SelectItem value="business_license">
                         <div className="flex items-center gap-2">
                           <FileText className="w-4 h-4" />
                           Biznes litsenziya
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="location">
+                        <div className="flex items-center gap-2">
+                          <Tractor className="w-4 h-4" />
+                          Joylashuv hujjati
                         </div>
                       </SelectItem>
                     </SelectContent>
