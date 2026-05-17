@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,18 +7,32 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Tractor, User } from "lucide-react";
+import { Loader2, Tractor, User, Gift } from "lucide-react";
 
 const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [userType, setUserType] = useState<"buyer" | "farmer">("buyer");
+
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (ref) {
+      const code = ref.toUpperCase().trim();
+      setReferralCode(code);
+      localStorage.setItem("pending_referral", code);
+    } else {
+      const stored = localStorage.getItem("pending_referral");
+      if (stored) setReferralCode(stored);
+    }
+  }, [searchParams]);
 
   const handleSignUp = async (e: React.FormEvent, isFarmer: boolean = false) => {
     e.preventDefault();
@@ -32,6 +46,7 @@ const Auth = () => {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
             full_name: fullName,
+            referral_code: referralCode || undefined,
           },
         },
       });
@@ -44,6 +59,8 @@ const Auth = () => {
           .from("profiles")
           .update({ phone, location })
           .eq("user_id", data.user.id);
+
+        localStorage.removeItem("pending_referral");
 
         // If farmer, add farmer role using secure database function
         if (isFarmer) {
