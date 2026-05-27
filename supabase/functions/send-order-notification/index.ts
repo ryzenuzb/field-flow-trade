@@ -33,26 +33,52 @@ interface OrderNotificationRequest {
   total_price: number;
 }
 
+const VALID_STATUSES = new Set(['pending','accepted','processing','shipped','delivered','disputed','refunded','cancelled']);
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const esc = (s: unknown) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { 
-      order_id, 
-      new_status, 
-      buyer_email, 
-      buyer_name, 
-      product_title, 
-      quantity, 
-      total_price 
-    }: OrderNotificationRequest = await req.json();
+    // Require service-role authorization (called from trusted edge functions only)
+    const authHeader = req.headers.get("Authorization") || "";
+    const expected = `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`;
+    if (authHeader !== expected) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
 
-    console.log("Sending order notification email:", { order_id, new_status, buyer_email });
+    const body: OrderNotificationRequest = await req.json();
+    const { order_id, new_status, buyer_email, buyer_name, product_title, quantity, total_price } = body;
+
+    if (!order_id || !new_status || !buyer_email) {
+      return new Response(JSON.stringify({ error: "Missing fields" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    }
+    if (!EMAIL_RE.test(String(buyer_email)) || String(buyer_email).length > 254) {
+      return new Response(JSON.stringify({ error: "Invalid email" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    }
+    if (!VALID_STATUSES.has(String(new_status))) {
+      return new Response(JSON.stringify({ error: "Invalid status" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    }
+
+    console.log("Sending order notification email:", { order_id, new_status });
 
     const statusLabel = statusLabels[new_status] || new_status;
     const statusDescription = statusDescriptions[new_status] || "Buyurtmangiz holati yangilandi.";
+
+    const safeName = esc(buyer_name).slice(0, 100);
+    const safeTitle = esc(product_title).slice(0, 200);
+    const safeStatusLabel = esc(statusLabel);
+    const safeStatusDesc = esc(statusDescription);
+    const safeStatusClass = esc(new_status);
+    const safeQty = Number(quantity) || 0;
+    const safeTotal = Number(total_price) || 0;
+    const safeOrderId = esc(String(order_id).slice(0, 8));
 
     const emailResponse = await resend.emails.send({
       from: "FarmTrade <onboarding@resend.dev>",
@@ -84,23 +110,24 @@ const handler = async (req: Request): Promise<Response> => {
               <p>Buyurtma holati yangilandi</p>
             </div>
             <div class="content">
-              <p>Assalomu alaykum, <strong>${buyer_name}</strong>!</p>
+              <p>Assalomu alaykum, <strong>${safeName}</strong>!</p>
               
               <p>Sizning buyurtmangiz holati yangilandi:</p>
               
-              <div class="status-badge status-${new_status}">
-                ${statusLabel}
+              <div class="status-badge status-${safeStatusClass}">
+                ${safeStatusLabel}
               </div>
               
-              <p>${statusDescription}</p>
+              <p>${safeStatusDesc}</p>
               
               <div class="order-details">
                 <h3>Buyurtma ma'lumotlari:</h3>
-                <p><strong>Mahsulot:</strong> ${product_title}</p>
-                <p><strong>Miqdori:</strong> ${quantity}</p>
-                <p><strong>Jami narx:</strong> ${total_price.toLocaleString()} so'm</p>
-                <p><strong>Buyurtma ID:</strong> ${order_id.slice(0, 8)}...</p>
+                <p><strong>Mahsulot:</strong> ${safeTitle}</p>
+                <p><strong>Miqdori:</strong> ${safeQty}</p>
+                <p><strong>Jami narx:</strong> ${safeTotal.toLocaleString()} so'm</p>
+                <p><strong>Buyurtma ID:</strong> ${safeOrderId}...</p>
               </div>
+              
               
               <p>Savollaringiz bo'lsa, bizga murojaat qiling.</p>
               

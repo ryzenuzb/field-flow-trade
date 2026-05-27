@@ -91,18 +91,18 @@ const Marketplace = () => {
       // Fetch seller profiles separately
       const sellerIds = [...new Set((data || []).map(p => p.seller_id))];
       const { data: profilesData } = await supabase
-        .from('profiles')
+        .from('public_profiles' as any)
         .select('user_id, full_name, location')
         .in('user_id', sellerIds);
 
-      const profileMap = new Map((profilesData || []).map(p => [p.user_id, p]));
+      const profileMap = new Map(((profilesData as any[]) || []).map((p: any) => [p.user_id, p]));
 
       const enriched = (data || []).map(p => ({
         ...p,
         profiles: profileMap.get(p.seller_id) || null,
       }));
 
-      setProducts(enriched as Product[]);
+      setProducts(enriched as unknown as Product[]);
       
       // Calculate max price for slider
       if (data && data.length > 0) {
