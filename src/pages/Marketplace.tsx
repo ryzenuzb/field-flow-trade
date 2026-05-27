@@ -91,7 +91,7 @@ const Marketplace = () => {
       // Fetch seller profiles separately
       const sellerIds = [...new Set((data || []).map(p => p.seller_id))];
       const { data: profilesData } = await supabase
-        .from('profiles')
+        .from('public_profiles' as any)
         .select('user_id, full_name, location')
         .in('user_id', sellerIds);
 
