@@ -110,23 +110,24 @@ const handler = async (req: Request): Promise<Response> => {
               <p>Buyurtma holati yangilandi</p>
             </div>
             <div class="content">
-              <p>Assalomu alaykum, <strong>${buyer_name}</strong>!</p>
+              <p>Assalomu alaykum, <strong>${safeName}</strong>!</p>
               
               <p>Sizning buyurtmangiz holati yangilandi:</p>
               
-              <div class="status-badge status-${new_status}">
-                ${statusLabel}
+              <div class="status-badge status-${safeStatusClass}">
+                ${safeStatusLabel}
               </div>
               
-              <p>${statusDescription}</p>
+              <p>${safeStatusDesc}</p>
               
               <div class="order-details">
                 <h3>Buyurtma ma'lumotlari:</h3>
-                <p><strong>Mahsulot:</strong> ${product_title}</p>
-                <p><strong>Miqdori:</strong> ${quantity}</p>
-                <p><strong>Jami narx:</strong> ${total_price.toLocaleString()} so'm</p>
-                <p><strong>Buyurtma ID:</strong> ${order_id.slice(0, 8)}...</p>
+                <p><strong>Mahsulot:</strong> ${safeTitle}</p>
+                <p><strong>Miqdori:</strong> ${safeQty}</p>
+                <p><strong>Jami narx:</strong> ${safeTotal.toLocaleString()} so'm</p>
+                <p><strong>Buyurtma ID:</strong> ${safeOrderId}...</p>
               </div>
+              
               
               <p>Savollaringiz bo'lsa, bizga murojaat qiling.</p>
               
