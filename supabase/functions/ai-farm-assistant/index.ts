@@ -1,9 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const MAX_MESSAGE_LEN = 4000;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -11,13 +14,62 @@ serve(async (req) => {
   }
 
   try {
+    // Require authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Avtorizatsiya talab qilinadi' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const serviceClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: authErr } = await supabaseClient.auth.getClaims(token);
+    if (authErr || !claimsData?.claims) {
+      return new Response(
+        JSON.stringify({ error: 'Avtorizatsiya xatosi' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+    const userId = claimsData.claims.sub as string;
+
+    // Rate limit: 20 AI calls / hour per user
+    const { data: allowed } = await serviceClient.rpc('check_rate_limit', {
+      p_user_id: userId,
+      p_action: 'ai_query',
+      p_max_requests: 20,
+      p_window_seconds: 3600,
+    });
+    if (allowed === false) {
+      return new Response(
+        JSON.stringify({ error: "So'rovlar limiti oshib ketdi. Iltimos, biroz kuting." }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 }
+      );
+    }
+
     const { message, image } = await req.json();
 
     if (!message && !image) {
       throw new Error('Message or image is required');
     }
+    if (typeof message === 'string' && message.length > MAX_MESSAGE_LEN) {
+      return new Response(
+        JSON.stringify({ error: `Xabar juda uzun (maks ${MAX_MESSAGE_LEN} belgi)` }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
 
-    console.log('Processing request:', { hasMessage: !!message, hasImage: !!image });
+    console.log('Processing AI request for user:', userId, { hasMessage: !!message, hasImage: !!image });
 
     // Build the user content based on whether there's an image
     let userContent: any;
