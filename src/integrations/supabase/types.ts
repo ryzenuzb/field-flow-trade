@@ -715,6 +715,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       rate_limits: {
@@ -1134,7 +1141,24 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_profiles: {
+        Row: {
+          full_name: string | null
+          location: string | null
+          user_id: string | null
+        }
+        Insert: {
+          full_name?: string | null
+          location?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          full_name?: string | null
+          location?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       assign_farmer_role: {
