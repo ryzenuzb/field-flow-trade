@@ -317,6 +317,48 @@ export type Database = {
         }
         Relationships: []
       }
+      error_logs: {
+        Row: {
+          context: Json | null
+          created_at: string
+          function_name: string
+          id: string
+          message: string
+          resolved: boolean
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          stack: string | null
+          user_id: string | null
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          function_name: string
+          id?: string
+          message: string
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          stack?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          function_name?: string
+          id?: string
+          message?: string
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          stack?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       escrow_transactions: {
         Row: {
           amount: number
@@ -1192,6 +1234,17 @@ export type Database = {
         Returns: boolean
       }
       is_main_admin: { Args: { _user_id: string }; Returns: boolean }
+      log_error: {
+        Args: {
+          p_context?: Json
+          p_function: string
+          p_message: string
+          p_severity: string
+          p_stack?: string
+          p_user?: string
+        }
+        Returns: string
+      }
       remove_sub_admin_role: {
         Args: { target_user_id: string }
         Returns: undefined
