@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logError } from "../_shared/error-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -164,7 +165,14 @@ Har doim do'stona, professional va yordam berishga tayyor bo'ling!`;
     if (!response.ok) {
       const errorData = await response.text();
       console.error('AI Gateway error:', response.status, errorData);
-      
+      await logError({
+        function_name: 'ai-farm-assistant',
+        severity: response.status >= 500 ? 'critical' : 'error',
+        message: `AI Gateway ${response.status}`,
+        context: { status: response.status, body: errorData.slice(0, 500), hasImage: !!image },
+        user_id: userId,
+      });
+
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ error: "Tizim hozir band, iltimos keyinroq urinib ko'ring" }),
@@ -177,7 +185,7 @@ Har doim do'stona, professional va yordam berishga tayyor bo'ling!`;
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 402 }
         );
       }
-      
+
       throw new Error('Failed to get AI response');
     }
 
@@ -200,11 +208,18 @@ Har doim do'stona, professional va yordam berishga tayyor bo'ling!`;
   } catch (error) {
     console.error('Error in AI farm assistant:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    const stack = error instanceof Error ? error.stack : undefined;
+    await logError({
+      function_name: 'ai-farm-assistant',
+      severity: 'error',
+      message: errorMessage,
+      stack,
+    });
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400 
+        status: 400
       }
     );
   }

@@ -19,6 +19,7 @@ import { ProductCategoryChart } from "@/components/admin/ProductCategoryChart";
 import { OrderStatusChart } from "@/components/admin/OrderStatusChart";
 import { RegionalStats } from "@/components/admin/RegionalStats";
 import AdminSoilPanel from "@/components/soil/AdminSoilPanel";
+import { ErrorLogsTable } from "@/components/admin/ErrorLogsTable";
 
 interface UserProfile {
   id: string;
@@ -479,6 +480,9 @@ const Admin = () => {
             <TabsTrigger value="soil" className="data-[state=active]:bg-background">
               🔬 Tuproq
             </TabsTrigger>
+            <TabsTrigger value="errors" className="data-[state=active]:bg-background">
+              🐛 Xatolar
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
@@ -542,6 +546,10 @@ const Admin = () => {
 
           <TabsContent value="soil">
             <AdminSoilPanel />
+          </TabsContent>
+
+          <TabsContent value="errors">
+            <ErrorLogsTable />
           </TabsContent>
         </Tabs>
       </main>
