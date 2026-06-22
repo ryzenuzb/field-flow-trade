@@ -226,6 +226,13 @@ serve(async (req) => {
       }
     } catch (emailErr) {
       console.error("Email notification failed (non-fatal):", emailErr);
+      await logError({
+        function_name: "update-order-status-v2",
+        severity: "warning",
+        message: "Order notification email failed",
+        stack: emailErr instanceof Error ? emailErr.stack : undefined,
+        context: { order_id: body.order_id, new_status: body.status },
+      });
     }
 
     return new Response(
@@ -242,6 +249,13 @@ serve(async (req) => {
   } catch (error: unknown) {
     console.error("Status update error:", error);
     const message = error instanceof Error ? error.message : "Status yangilashda xatolik";
+    const stack = error instanceof Error ? error.stack : undefined;
+    await logError({
+      function_name: "update-order-status-v2",
+      severity: "error",
+      message,
+      stack,
+    });
     return new Response(
       JSON.stringify({ success: false, error: message }),
       {
