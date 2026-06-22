@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { AlertTriangle, CheckCircle2, Trash2, RefreshCw, Bug } from "lucide-react";
 import { toast } from "sonner";
-import { EmptyState } from "@/components/ui/empty-state";
+import EmptyState from "@/components/ui/empty-state";
 
 interface ErrorLog {
   id: string;
