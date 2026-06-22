@@ -152,6 +152,12 @@ const handler = async (req: Request): Promise<Response> => {
     });
   } catch (error: any) {
     console.error("Error sending order notification:", error);
+    await logError({
+      function_name: "send-order-notification",
+      severity: "error",
+      message: error?.message ?? "send failed",
+      stack: error?.stack,
+    });
     return new Response(
       JSON.stringify({ error: error.message }),
       {
