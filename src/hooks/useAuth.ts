@@ -82,8 +82,10 @@ export const useAuth = () => {
   }, [fetchUserData]);
 
   const signOut = useCallback(async () => {
+    clearOtpVerified();
     await supabase.auth.signOut();
   }, []);
+
 
   const updateProfile = useCallback(async (data: { full_name?: string; phone?: string; location?: string }) => {
     if (!state.user) return { error: "Not authenticated" };
