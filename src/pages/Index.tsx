@@ -8,6 +8,7 @@ import AIAssistant from "@/components/AIAssistant";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import SubAdminPanel from "@/components/SubAdminPanel";
 import PricingSection from "@/components/PricingSection";
+import HowItWorksSection from "@/components/HowItWorksSection";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
@@ -188,6 +189,8 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      <HowItWorksSection />
 
       <PricingSection />
 
