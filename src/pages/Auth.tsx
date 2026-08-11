@@ -25,14 +25,6 @@ const Auth = () => {
   const [referralCode, setReferralCode] = useState("");
   const [userType, setUserType] = useState<"buyer" | "farmer">("buyer");
 
-  // OTP (2FA) holati
-  const [otpStep, setOtpStep] = useState(false);
-  const [otpCode, setOtpCode] = useState("");
-  const [otpTarget, setOtpTarget] = useState("");
-  const [otpPhone, setOtpPhone] = useState("");
-  const [otpRedirect, setOtpRedirect] = useState("/");
-  const [resendIn, setResendIn] = useState(0);
-
   useEffect(() => {
     const ref = searchParams.get("ref");
     if (ref) {
@@ -45,19 +37,8 @@ const Auth = () => {
     }
   }, [searchParams]);
 
-  useEffect(() => {
-    if (resendIn <= 0) return;
-    const t = setTimeout(() => setResendIn((s) => s - 1), 1000);
-    return () => clearTimeout(t);
-  }, [resendIn]);
-
   const normalizePhone = (v: string) => v.replace(/[\s()-]/g, "");
 
-  const sendOtp = async () => {
-    const { error } = await supabase.functions.invoke("send-login-otp");
-    if (error) throw new Error("Tasdiqlash kodi yuborilmadi. Qayta urinib ko'ring.");
-    setResendIn(60);
-  };
 
   const handleSignUp = async (e: React.FormEvent, isFarmer: boolean = false) => {
     e.preventDefault();
