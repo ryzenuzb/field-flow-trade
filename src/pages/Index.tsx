@@ -189,6 +189,8 @@ const Index = () => {
         </div>
       </section>
 
+      <PricingSection />
+
       {/* AI Assistant Section - Moved to bottom before footer */}
       <section id="ai-assistant" className="py-20 bg-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
