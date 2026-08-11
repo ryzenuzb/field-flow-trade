@@ -7,8 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Tractor, User, Gift, ShieldCheck, ArrowLeft, Phone } from "lucide-react";
-import { markOtpVerified, clearOtpVerified } from "@/lib/otpSession";
+import { Loader2, Tractor, User, Gift } from "lucide-react";
+
 
 const PHONE_RE = /^\+?998\d{9}$/;
 
@@ -25,14 +25,6 @@ const Auth = () => {
   const [referralCode, setReferralCode] = useState("");
   const [userType, setUserType] = useState<"buyer" | "farmer">("buyer");
 
-  // OTP (2FA) holati
-  const [otpStep, setOtpStep] = useState(false);
-  const [otpCode, setOtpCode] = useState("");
-  const [otpTarget, setOtpTarget] = useState("");
-  const [otpPhone, setOtpPhone] = useState("");
-  const [otpRedirect, setOtpRedirect] = useState("/");
-  const [resendIn, setResendIn] = useState(0);
-
   useEffect(() => {
     const ref = searchParams.get("ref");
     if (ref) {
@@ -45,19 +37,8 @@ const Auth = () => {
     }
   }, [searchParams]);
 
-  useEffect(() => {
-    if (resendIn <= 0) return;
-    const t = setTimeout(() => setResendIn((s) => s - 1), 1000);
-    return () => clearTimeout(t);
-  }, [resendIn]);
-
   const normalizePhone = (v: string) => v.replace(/[\s()-]/g, "");
 
-  const sendOtp = async () => {
-    const { error } = await supabase.functions.invoke("send-login-otp");
-    if (error) throw new Error("Tasdiqlash kodi yuborilmadi. Qayta urinib ko'ring.");
-    setResendIn(60);
-  };
 
   const handleSignUp = async (e: React.FormEvent, isFarmer: boolean = false) => {
     e.preventDefault();
@@ -166,74 +147,17 @@ const Auth = () => {
           }
         }
 
-        // Har kirishda 2FA — kod yuboriladi
-        clearOtpVerified(data.user.id);
-        await sendOtp();
-
-        setOtpTarget(data.user.email ?? email);
-        setOtpPhone(profileData?.phone ?? "");
-        setOtpRedirect(checkFarmerRole ? "/farmer" : "/");
-        setOtpStep(true);
-        setOtpCode("");
-
         toast({
-          title: "Tasdiqlash kodi yuborildi",
-          description: "5 xonali kodni kiritganingizdan so'ng tizimga kirasiz",
+          title: "Muvaffaqiyatli kirdingiz!",
+          description: "Xush kelibsiz",
         });
+        navigate(checkFarmerRole ? "/farmer" : "/");
       }
     } catch (error: any) {
       toast({ title: "Xatolik", description: error.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!/^\d{5}$/.test(otpCode)) {
-      toast({ title: "Kod 5 xonali bo'lishi kerak", variant: "destructive" });
-      return;
-    }
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("verify-login-otp", {
-        body: { code: otpCode },
-      });
-      if (error || !data?.success) {
-        throw new Error("Kod noto'g'ri yoki muddati tugagan");
-      }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Sessiya topilmadi, qaytadan kiring");
-      markOtpVerified(user.id);
-
-      toast({ title: "Tasdiqlandi", description: "Tizimga kirish mumkin" });
-      navigate(otpRedirect);
-    } catch (error: any) {
-      toast({ title: "Xatolik", description: error.message, variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResend = async () => {
-    setLoading(true);
-    try {
-      await sendOtp();
-      toast({ title: "Yangi kod yuborildi" });
-    } catch (error: any) {
-      toast({ title: "Xatolik", description: error.message, variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const cancelOtp = async () => {
-    await supabase.auth.signOut();
-    clearOtpVerified();
-    setOtpStep(false);
-    setOtpCode("");
-    setPassword("");
   };
 
   const resetForm = () => {
@@ -244,66 +168,7 @@ const Auth = () => {
     setLocation("");
   };
 
-  if (otpStep) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-accent/20 p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-2xl text-center flex items-center justify-center gap-2">
-              <ShieldCheck className="w-6 h-6 text-farm" />
-              Tasdiqlash kodi
-            </CardTitle>
-            <CardDescription className="text-center">
-              5 xonali kod <span className="font-medium text-foreground">{otpTarget}</span> ga yuborildi
-              {otpPhone && (
-                <span className="mt-2 flex items-center justify-center gap-1 text-xs">
-                  <Phone className="w-3 h-3" /> Ro'yxatdagi raqam: {otpPhone}
-                </span>
-              )}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleVerifyOtp} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="otp-code">Kodni kiriting</Label>
-                <Input
-                  id="otp-code"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  maxLength={5}
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 5))}
-                  placeholder="12345"
-                  className="text-center text-2xl tracking-[0.5em] font-semibold"
-                  autoFocus
-                  required
-                />
-                <p className="text-xs text-muted-foreground text-center">Kod 5 daqiqa amal qiladi</p>
-              </div>
-              <Button type="submit" className="w-full" disabled={loading || otpCode.length !== 5}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Tasdiqlash va kirish
-              </Button>
-              <div className="flex items-center justify-between text-sm">
-                <Button type="button" variant="ghost" size="sm" onClick={cancelOtp} disabled={loading}>
-                  <ArrowLeft className="w-4 h-4 mr-1" /> Orqaga
-                </Button>
-                <Button
-                  type="button"
-                  variant="link"
-                  size="sm"
-                  onClick={handleResend}
-                  disabled={loading || resendIn > 0}
-                >
-                  {resendIn > 0 ? `Qayta yuborish (${resendIn}s)` : "Kodni qayta yuborish"}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-accent/20 p-4">
@@ -369,10 +234,6 @@ const Auth = () => {
                         onChange={(e) => setPassword(e.target.value)}
                         required
                       />
-                    </div>
-                    <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 text-xs text-muted-foreground">
-                      <ShieldCheck className="w-4 h-4 mt-0.5 text-farm shrink-0" />
-                      Har kirishda 5 xonali tasdiqlash kodi yuboriladi
                     </div>
                     <Button type="submit" className="w-full" disabled={loading}>
                       {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -490,10 +351,6 @@ const Auth = () => {
                         onChange={(e) => setPassword(e.target.value)}
                         required
                       />
-                    </div>
-                    <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 text-xs text-muted-foreground">
-                      <ShieldCheck className="w-4 h-4 mt-0.5 text-farm shrink-0" />
-                      Har kirishda 5 xonali tasdiqlash kodi yuboriladi
                     </div>
                     <Button type="submit" className="w-full bg-farm hover:bg-farm-dark" disabled={loading}>
                       {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
