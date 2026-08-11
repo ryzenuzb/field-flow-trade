@@ -82,7 +82,6 @@ export const useAuth = () => {
   }, [fetchUserData]);
 
   const signOut = useCallback(async () => {
-    clearOtpVerified();
     await supabase.auth.signOut();
   }, []);
 
