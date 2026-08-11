@@ -122,20 +122,6 @@ export const useRequireRole = (
       return;
     }
 
-    // Har kirishda 2FA: kod tasdiqlanmagan sessiya kirita olmaydi
-    if (!isOtpVerified(auth.user?.id)) {
-      supabase.auth.signOut().finally(() => {
-        clearOtpVerified();
-        toast({
-          title: "Tasdiqlash kerak",
-          description: "Iltimos, qaytadan kirib, emailingizga kelgan kodni kiriting",
-          variant: "destructive",
-        });
-        navigate("/auth");
-      });
-      return;
-    }
-
     if (requiredRole && !auth.roles.includes(requiredRole)) {
       toast({
         title: "Ruxsat yo'q",
@@ -145,6 +131,7 @@ export const useRequireRole = (
       navigate("/");
     }
   }, [auth.loading, auth.isAuthenticated, auth.user?.id, auth.roles, requiredRole, navigate, redirectTo, toast]);
+
 
 
   return auth;
