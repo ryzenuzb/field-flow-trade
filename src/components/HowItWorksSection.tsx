@@ -33,7 +33,7 @@ const HowItWorksSection = () => {
         { icon: LineChart, text: "Kelgusi yil uchun eng serdaromad ekin navbati tavsiyasi" },
         { icon: Users, text: "Klasterlar uchun shaxsiy menejer va tahliliy hisobotlar" },
       ],
-      action: { label: "Tahlilga buyurtma", onClick: () => navigate("/soil-analysis") },
+      action: { label: "Tahlilga buyurtma", onClick: () => navigate("/soil-check") },
       featured: false,
     },
   ];
