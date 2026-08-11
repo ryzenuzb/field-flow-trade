@@ -7,6 +7,7 @@ import Navigation from "@/components/ui/navigation";
 import AIAssistant from "@/components/AIAssistant";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import SubAdminPanel from "@/components/SubAdminPanel";
+import PricingSection from "@/components/PricingSection";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
@@ -187,6 +188,8 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      <PricingSection />
 
       {/* AI Assistant Section - Moved to bottom before footer */}
       <section id="ai-assistant" className="py-20 bg-muted/30">
