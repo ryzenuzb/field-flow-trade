@@ -7,6 +7,7 @@ import Navigation from "@/components/ui/navigation";
 import AIAssistant from "@/components/AIAssistant";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import SubAdminPanel from "@/components/SubAdminPanel";
+import PricingSection from "@/components/PricingSection";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
