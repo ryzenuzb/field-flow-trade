@@ -371,10 +371,6 @@ const Auth = () => {
                         required
                       />
                     </div>
-                    <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 text-xs text-muted-foreground">
-                      <ShieldCheck className="w-4 h-4 mt-0.5 text-farm shrink-0" />
-                      Har kirishda 5 xonali tasdiqlash kodi yuboriladi
-                    </div>
                     <Button type="submit" className="w-full bg-farm hover:bg-farm-dark" disabled={loading}>
                       {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       <Tractor className="mr-2 h-4 w-4" />
