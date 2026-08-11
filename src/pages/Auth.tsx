@@ -7,8 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Tractor, User, Gift, ShieldCheck, ArrowLeft, Phone } from "lucide-react";
-import { markOtpVerified, clearOtpVerified } from "@/lib/otpSession";
+import { Loader2, Tractor, User, Gift } from "lucide-react";
+
 
 const PHONE_RE = /^\+?998\d{9}$/;
 
