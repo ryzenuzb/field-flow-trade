@@ -18,6 +18,18 @@ export default {
         'inter': ['Inter', 'sans-serif'],
       },
       colors: {
+        click: {
+          DEFAULT: "hsl(var(--pay-click))",
+          foreground: "hsl(var(--pay-click-foreground))",
+        },
+        payme: {
+          DEFAULT: "hsl(var(--pay-payme))",
+          foreground: "hsl(var(--pay-payme-foreground))",
+        },
+        uzum: {
+          DEFAULT: "hsl(var(--pay-uzum))",
+          foreground: "hsl(var(--pay-uzum-foreground))",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

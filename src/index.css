@@ -33,6 +33,14 @@
     --accent-foreground: 200 90% 25%;
     --accent-vibrant: 200 85% 60%;
 
+    /* Payment brand tokens */
+    --pay-click: 202 100% 44%;
+    --pay-click-foreground: 0 0% 100%;
+    --pay-payme: 154 68% 44%;
+    --pay-payme-foreground: 0 0% 100%;
+    --pay-uzum: 265 78% 55%;
+    --pay-uzum-foreground: 0 0% 100%;
+
     --muted: 45 15% 92%;
     --muted-foreground: 25 15% 45%;
 

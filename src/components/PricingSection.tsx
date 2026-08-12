@@ -1,11 +1,13 @@
+import { useState } from "react";
 import { Check, Sparkles, Building2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useNavigate } from "react-router-dom";
+import CheckoutDialog from "@/components/CheckoutDialog";
 
 const PricingSection = () => {
-  const navigate = useNavigate();
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+
 
   const farmerFeatures = [
     "Real vaqtda narxlar monitoringi",
@@ -65,7 +67,7 @@ const PricingSection = () => {
                 ))}
               </ul>
 
-              <Button className="btn-farm w-full justify-center" onClick={() => navigate("/auth")}>
+              <Button className="btn-farm w-full justify-center" onClick={() => setCheckoutOpen(true)}>
                 Hozir boshlash
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
@@ -103,6 +105,13 @@ const PricingSection = () => {
           </Card>
         </div>
       </div>
+
+      <CheckoutDialog
+        open={checkoutOpen}
+        onOpenChange={setCheckoutOpen}
+        planName="Fermer tarifi"
+        amount={40000}
+      />
     </section>
   );
 };
