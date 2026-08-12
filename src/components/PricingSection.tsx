@@ -1,11 +1,13 @@
+import { useState } from "react";
 import { Check, Sparkles, Building2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useNavigate } from "react-router-dom";
+import CheckoutDialog from "@/components/CheckoutDialog";
 
 const PricingSection = () => {
-  const navigate = useNavigate();
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+
 
   const farmerFeatures = [
     "Real vaqtda narxlar monitoringi",
