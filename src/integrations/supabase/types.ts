@@ -597,6 +597,90 @@ export type Database = {
           },
         ]
       }
+      payment_requests: {
+        Row: {
+          admin_note: string | null
+          amount: number
+          created_at: string
+          id: string
+          payer_name: string | null
+          payer_phone: string | null
+          plan_name: string
+          provider: string
+          receipt_url: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          amount: number
+          created_at?: string
+          id?: string
+          payer_name?: string | null
+          payer_phone?: string | null
+          plan_name?: string
+          provider: string
+          receipt_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          payer_name?: string | null
+          payer_phone?: string | null
+          plan_name?: string
+          provider?: string
+          receipt_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      payment_settings: {
+        Row: {
+          bank_name: string | null
+          card_holder: string
+          card_number: string
+          created_at: string
+          id: string
+          instructions: string | null
+          is_active: boolean
+          phone: string | null
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          bank_name?: string | null
+          card_holder: string
+          card_number: string
+          created_at?: string
+          id?: string
+          instructions?: string | null
+          is_active?: boolean
+          phone?: string | null
+          provider: string
+          updated_at?: string
+        }
+        Update: {
+          bank_name?: string | null
+          card_holder?: string
+          card_number?: string
+          created_at?: string
+          id?: string
+          instructions?: string | null
+          is_active?: boolean
+          phone?: string | null
+          provider?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       private_messages: {
         Row: {
           attachment_url: string | null
