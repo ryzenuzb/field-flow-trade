@@ -67,7 +67,7 @@ const PricingSection = () => {
                 ))}
               </ul>
 
-              <Button className="btn-farm w-full justify-center" onClick={() => navigate("/auth")}>
+              <Button className="btn-farm w-full justify-center" onClick={() => setCheckoutOpen(true)}>
                 Hozir boshlash
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
@@ -105,6 +105,13 @@ const PricingSection = () => {
           </Card>
         </div>
       </div>
+
+      <CheckoutDialog
+        open={checkoutOpen}
+        onOpenChange={setCheckoutOpen}
+        planName="Fermer tarifi"
+        amount={40000}
+      />
     </section>
   );
 };
