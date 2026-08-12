@@ -485,6 +485,11 @@ const Admin = () => {
             <TabsTrigger value="errors" className="data-[state=active]:bg-background">
               🐛 Xatolar
             </TabsTrigger>
+            {isMainAdmin && (
+              <TabsTrigger value="payments" className="data-[state=active]:bg-background">
+                💳 To'lovlar
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
@@ -553,6 +558,12 @@ const Admin = () => {
           <TabsContent value="errors">
             <ErrorLogsTable />
           </TabsContent>
+
+          {isMainAdmin && (
+            <TabsContent value="payments">
+              <PaymentSettingsPanel />
+            </TabsContent>
+          )}
         </Tabs>
       </main>
     </div>
