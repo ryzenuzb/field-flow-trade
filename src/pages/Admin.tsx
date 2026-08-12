@@ -20,6 +20,8 @@ import { OrderStatusChart } from "@/components/admin/OrderStatusChart";
 import { RegionalStats } from "@/components/admin/RegionalStats";
 import AdminSoilPanel from "@/components/soil/AdminSoilPanel";
 import { ErrorLogsTable } from "@/components/admin/ErrorLogsTable";
+import { PaymentSettingsPanel } from "@/components/admin/PaymentSettingsPanel";
+
 
 interface UserProfile {
   id: string;
