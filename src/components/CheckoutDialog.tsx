@@ -235,6 +235,15 @@ const CheckoutDialog = ({
               <div className="flex justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
               </div>
+            ) : authRequired ? (
+              <div className="space-y-3 pt-2 text-center">
+                <p className="text-sm text-muted-foreground">
+                  To'lov ma'lumotlarini ko'rish uchun tizimga kiring.
+                </p>
+                <Button className="w-full" onClick={() => (window.location.href = "/auth")}>
+                  Tizimga kirish
+                </Button>
+              </div>
             ) : (
               <div className="space-y-3 pt-1">
                 {METHODS.map((m) => {
