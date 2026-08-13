@@ -98,6 +98,7 @@ const CheckoutDialog = ({
   const [payerName, setPayerName] = useState("");
   const [payerPhone, setPayerPhone] = useState("");
   const [receipt, setReceipt] = useState<File | null>(null);
+  const [authRequired, setAuthRequired] = useState(false);
 
   useEffect(() => {
     if (!open) {
@@ -111,6 +112,13 @@ const CheckoutDialog = ({
 
     (async () => {
       setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setAuthRequired(true);
+        setLoading(false);
+        return;
+      }
+      setAuthRequired(false);
       const { data } = await supabase
         .from("payment_settings" as any)
         .select("provider, card_number, card_holder, bank_name, phone, instructions")
@@ -226,6 +234,15 @@ const CheckoutDialog = ({
             {loading ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              </div>
+            ) : authRequired ? (
+              <div className="space-y-3 pt-2 text-center">
+                <p className="text-sm text-muted-foreground">
+                  To'lov ma'lumotlarini ko'rish uchun tizimga kiring.
+                </p>
+                <Button className="w-full" onClick={() => (window.location.href = "/auth")}>
+                  Tizimga kirish
+                </Button>
               </div>
             ) : (
               <div className="space-y-3 pt-1">
