@@ -111,6 +111,13 @@ const CheckoutDialog = ({
 
     (async () => {
       setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setAuthRequired(true);
+        setLoading(false);
+        return;
+      }
+      setAuthRequired(false);
       const { data } = await supabase
         .from("payment_settings" as any)
         .select("provider, card_number, card_holder, bank_name, phone, instructions")
