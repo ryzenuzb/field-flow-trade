@@ -98,6 +98,7 @@ const CheckoutDialog = ({
   const [payerName, setPayerName] = useState("");
   const [payerPhone, setPayerPhone] = useState("");
   const [receipt, setReceipt] = useState<File | null>(null);
+  const [authRequired, setAuthRequired] = useState(false);
 
   useEffect(() => {
     if (!open) {
