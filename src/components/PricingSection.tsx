@@ -8,6 +8,7 @@ import ClusterContactDialog from "@/components/ClusterContactDialog";
 
 const PricingSection = () => {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [clusterOpen, setClusterOpen] = useState(false);
 
 
   const farmerFeatures = [
