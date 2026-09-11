@@ -100,8 +100,8 @@ const PricingSection = () => {
                 ))}
               </ul>
 
-              <Button variant="outline" className="w-full" asChild>
-                <a href="tel:+998901234567">Aloqaga chiqish</a>
+              <Button variant="outline" className="w-full" onClick={() => setClusterOpen(true)}>
+                Aloqaga chiqish
               </Button>
             </CardContent>
           </Card>
@@ -113,6 +113,11 @@ const PricingSection = () => {
         onOpenChange={setCheckoutOpen}
         planName="Fermer tarifi"
         amount={40000}
+      />
+
+      <ClusterContactDialog
+        open={clusterOpen}
+        onOpenChange={setClusterOpen}
       />
     </section>
   );
