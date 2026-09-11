@@ -159,6 +159,45 @@ export type Database = {
           },
         ]
       }
+      cluster_inquiries: {
+        Row: {
+          company_name: string | null
+          created_at: string
+          full_name: string
+          hectares: number | null
+          id: string
+          message: string | null
+          phone: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string
+          full_name: string
+          hectares?: number | null
+          id?: string
+          message?: string | null
+          phone: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string
+          full_name?: string
+          hectares?: number | null
+          id?: string
+          message?: string | null
+          phone?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       commissions: {
         Row: {
           collected_at: string | null
