@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import CheckoutDialog from "@/components/CheckoutDialog";
+import ClusterContactDialog from "@/components/ClusterContactDialog";
 
 const PricingSection = () => {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
