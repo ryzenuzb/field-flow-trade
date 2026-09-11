@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import CheckoutDialog from "@/components/CheckoutDialog";
+import ClusterContactDialog from "@/components/ClusterContactDialog";
 
 const PricingSection = () => {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [clusterOpen, setClusterOpen] = useState(false);
 
 
   const farmerFeatures = [
@@ -98,8 +100,8 @@ const PricingSection = () => {
                 ))}
               </ul>
 
-              <Button variant="outline" className="w-full" asChild>
-                <a href="tel:+998901234567">Aloqaga chiqish</a>
+              <Button variant="outline" className="w-full" onClick={() => setClusterOpen(true)}>
+                Aloqaga chiqish
               </Button>
             </CardContent>
           </Card>
@@ -111,6 +113,11 @@ const PricingSection = () => {
         onOpenChange={setCheckoutOpen}
         planName="Fermer tarifi"
         amount={40000}
+      />
+
+      <ClusterContactDialog
+        open={clusterOpen}
+        onOpenChange={setClusterOpen}
       />
     </section>
   );
