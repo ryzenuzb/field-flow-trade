@@ -25,8 +25,12 @@ import {
   ArrowLeft,
   ShoppingBag,
   X,
-  Loader2
+  Loader2,
+  Star,
+  Trophy
 } from "lucide-react";
+import { RateOrderDialog } from "@/components/reviews/RateOrderDialog";
+import { StarRating } from "@/components/reviews/StarRating";
 
 interface Order {
   id: string;
@@ -34,6 +38,7 @@ interface Order {
   total_price: number;
   status: string;
   created_at: string;
+  product_id: string | null;
   products: {
     title: string;
     price: number;
@@ -44,8 +49,15 @@ interface Order {
   } | null;
 }
 
+interface ReviewInfo {
+  rating: number;
+  comment: string | null;
+}
+
 const OrderHistory = () => {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [reviews, setReviews] = useState<Record<string, ReviewInfo>>({});
+  const [ratingOrder, setRatingOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
   const navigate = useNavigate();
