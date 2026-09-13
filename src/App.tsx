@@ -16,6 +16,7 @@ import FarmerDashboard from "./pages/FarmerDashboard";
 import FarmerApplication from "./pages/FarmerApplication";
 import OrderHistory from "./pages/OrderHistory";
 import SoilCheck from "./pages/SoilCheck";
+import Leaderboard from "./pages/Leaderboard";
 
 import NotFound from "./pages/NotFound";
 
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/farmer/apply" element={<FarmerApplication />} />
             <Route path="/orders" element={<OrderHistory />} />
             <Route path="/soil-check" element={<SoilCheck />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
