@@ -104,6 +104,7 @@ const OrderHistory = () => {
           total_price,
           status,
           created_at,
+          product_id,
           products (
             title,
             price,
@@ -117,7 +118,18 @@ const OrderHistory = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setOrders(data || []);
+      setOrders((data as any) || []);
+
+      const { data: reviewData } = await supabase
+        .from("reviews")
+        .select("order_id, rating, comment")
+        .eq("reviewer_id", userId);
+
+      const map: Record<string, ReviewInfo> = {};
+      (reviewData || []).forEach((r: any) => {
+        if (r.order_id) map[r.order_id] = { rating: r.rating, comment: r.comment };
+      });
+      setReviews(map);
     } catch (error) {
       console.error("Error fetching orders:", error);
       toast({
