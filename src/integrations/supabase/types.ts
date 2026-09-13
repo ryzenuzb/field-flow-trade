@@ -1385,6 +1385,18 @@ export type Database = {
       }
       create_order_chat: { Args: { p_order_id: string }; Returns: string }
       generate_referral_code: { Args: never; Returns: string }
+      get_farmer_leaderboard: {
+        Args: { p_limit?: number }
+        Returns: {
+          avg_rating: number
+          delivered_orders: number
+          five_star_count: number
+          full_name: string
+          location: string
+          reviews_count: number
+          seller_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
