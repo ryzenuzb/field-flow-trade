@@ -25,8 +25,12 @@ import {
   ArrowLeft,
   ShoppingBag,
   X,
-  Loader2
+  Loader2,
+  Star,
+  Trophy
 } from "lucide-react";
+import { RateOrderDialog } from "@/components/reviews/RateOrderDialog";
+import { StarRating } from "@/components/reviews/StarRating";
 
 interface Order {
   id: string;
@@ -34,6 +38,7 @@ interface Order {
   total_price: number;
   status: string;
   created_at: string;
+  product_id: string | null;
   products: {
     title: string;
     price: number;
@@ -44,8 +49,15 @@ interface Order {
   } | null;
 }
 
+interface ReviewInfo {
+  rating: number;
+  comment: string | null;
+}
+
 const OrderHistory = () => {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [reviews, setReviews] = useState<Record<string, ReviewInfo>>({});
+  const [ratingOrder, setRatingOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -92,6 +104,7 @@ const OrderHistory = () => {
           total_price,
           status,
           created_at,
+          product_id,
           products (
             title,
             price,
@@ -105,7 +118,18 @@ const OrderHistory = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setOrders(data || []);
+      setOrders((data as any) || []);
+
+      const { data: reviewData } = await supabase
+        .from("reviews")
+        .select("order_id, rating, comment")
+        .eq("reviewer_id", userId);
+
+      const map: Record<string, ReviewInfo> = {};
+      (reviewData || []).forEach((r: any) => {
+        if (r.order_id) map[r.order_id] = { rating: r.rating, comment: r.comment };
+      });
+      setReviews(map);
     } catch (error) {
       console.error("Error fetching orders:", error);
       toast({
@@ -352,6 +376,33 @@ const OrderHistory = () => {
                           </AlertDialog>
                         </div>
                       )}
+
+                      {/* Rating for delivered orders */}
+                      {order.status === "delivered" && order.products?.seller_id && (
+                        <div className="mt-4 pt-4 border-t border-border flex flex-wrap items-center gap-3">
+                          {reviews[order.id] ? (
+                            <>
+                              <StarRating value={reviews[order.id].rating} size="sm" />
+                              <span className="text-sm text-muted-foreground">
+                                Siz {reviews[order.id].rating} yulduz qo'ydingiz
+                              </span>
+                              <Button variant="outline" size="sm" onClick={() => setRatingOrder(order)}>
+                                O'zgartirish
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-sm text-muted-foreground">
+                                Fermerni baholang:
+                              </span>
+                              <Button size="sm" className="btn-farm" onClick={() => setRatingOrder(order)}>
+                                <Star className="w-4 h-4 mr-2" />
+                                Baholash
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -359,7 +410,30 @@ const OrderHistory = () => {
             ))}
           </div>
         )}
+
+        <div className="mt-8 text-center">
+          <Button variant="outline" onClick={() => navigate("/leaderboard")}>
+            <Trophy className="w-4 h-4 mr-2" />
+            Fermerlar reytingini ko'rish
+          </Button>
+        </div>
       </main>
+
+      {ratingOrder && ratingOrder.products?.seller_id && (
+        <RateOrderDialog
+          open={!!ratingOrder}
+          onOpenChange={(open) => !open && setRatingOrder(null)}
+          orderId={ratingOrder.id}
+          sellerId={ratingOrder.products.seller_id}
+          productId={ratingOrder.product_id}
+          productTitle={ratingOrder.products.title}
+          existingRating={reviews[ratingOrder.id]?.rating}
+          existingComment={reviews[ratingOrder.id]?.comment}
+          onSaved={(rating, comment) =>
+            setReviews((prev) => ({ ...prev, [ratingOrder.id]: { rating, comment } }))
+          }
+        />
+      )}
     </div>
   );
 };
