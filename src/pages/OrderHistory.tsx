@@ -376,6 +376,33 @@ const OrderHistory = () => {
                           </AlertDialog>
                         </div>
                       )}
+
+                      {/* Rating for delivered orders */}
+                      {order.status === "delivered" && order.products?.seller_id && (
+                        <div className="mt-4 pt-4 border-t border-border flex flex-wrap items-center gap-3">
+                          {reviews[order.id] ? (
+                            <>
+                              <StarRating value={reviews[order.id].rating} size="sm" />
+                              <span className="text-sm text-muted-foreground">
+                                Siz {reviews[order.id].rating} yulduz qo'ydingiz
+                              </span>
+                              <Button variant="outline" size="sm" onClick={() => setRatingOrder(order)}>
+                                O'zgartirish
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-sm text-muted-foreground">
+                                Fermerni baholang:
+                              </span>
+                              <Button size="sm" className="btn-farm" onClick={() => setRatingOrder(order)}>
+                                <Star className="w-4 h-4 mr-2" />
+                                Baholash
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -383,7 +410,30 @@ const OrderHistory = () => {
             ))}
           </div>
         )}
+
+        <div className="mt-8 text-center">
+          <Button variant="outline" onClick={() => navigate("/leaderboard")}>
+            <Trophy className="w-4 h-4 mr-2" />
+            Fermerlar reytingini ko'rish
+          </Button>
+        </div>
       </main>
+
+      {ratingOrder && ratingOrder.products?.seller_id && (
+        <RateOrderDialog
+          open={!!ratingOrder}
+          onOpenChange={(open) => !open && setRatingOrder(null)}
+          orderId={ratingOrder.id}
+          sellerId={ratingOrder.products.seller_id}
+          productId={ratingOrder.product_id}
+          productTitle={ratingOrder.products.title}
+          existingRating={reviews[ratingOrder.id]?.rating}
+          existingComment={reviews[ratingOrder.id]?.comment}
+          onSaved={(rating, comment) =>
+            setReviews((prev) => ({ ...prev, [ratingOrder.id]: { rating, comment } }))
+          }
+        />
+      )}
     </div>
   );
 };
