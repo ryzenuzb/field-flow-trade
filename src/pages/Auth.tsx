@@ -39,6 +39,33 @@ const Auth = () => {
 
   const normalizePhone = (v: string) => v.replace(/[\s()-]/g, "");
 
+  const authErrorMessage = (error: unknown) => {
+    const code = typeof error === "object" && error !== null && "code" in error ? String(error.code) : "";
+    if (code === "invalid_credentials") return "Email yoki parol noto'g'ri. Ma'lumotlarni tekshiring. Emailingizni hali tasdiqlamagan bo'lsangiz, tasdiqlash xatini qayta yuboring.";
+    if (code === "email_not_confirmed") return "Emailingiz hali tasdiqlanmagan. Pochtangizdagi tasdiqlash havolasini oching yoki xatni qayta yuboring.";
+    if (code === "over_email_send_rate_limit" || code === "over_request_rate_limit") return "Juda ko'p urinish bo'ldi. Biroz kutib, qayta urinib ko'ring.";
+    if (code === "user_already_exists") return "Bu email bilan hisob mavjud. Kirish bo'limidan foydalaning.";
+    if (code === "weak_password") return "Kuchliroq parol tanlang. Harflar, raqamlar va belgilarni ishlating.";
+    return "Amalni bajarib bo'lmadi. Internet aloqasini tekshiring va qayta urinib ko'ring.";
+  };
+
+  const resendConfirmation = async () => {
+    const cleanEmail = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      toast({ title: "Emailni kiriting", description: "Tasdiqlash xati uchun email manzilingizni to'g'ri kiriting.", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resend({ type: "signup", email: cleanEmail, options: { emailRedirectTo: `${window.location.origin}/auth` } });
+      if (error) throw error;
+      toast({ title: "Pochtangizni tekshiring", description: "Agar hisob tasdiqlashni kutayotgan bo'lsa, havola yuboriladi. Spam papkasini ham tekshiring." });
+    } catch (error: unknown) {
+      toast({ title: "Xatolik", description: authErrorMessage(error), variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSignUp = async (e: React.FormEvent, isFarmer: boolean = false) => {
     e.preventDefault();
@@ -56,7 +83,7 @@ const Auth = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: email.trim(),
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
@@ -88,12 +115,12 @@ const Auth = () => {
         toast({
           title: "Ro'yxatdan o'tish muvaffaqiyatli!",
           description: isFarmer
-            ? "Fermer sifatida ro'yxatdan o'tdingiz. Iltimos, hisobingizga kiring"
-            : "Iltimos, hisobingizga kiring",
+            ? "Emailingizga yuborilgan havolani ochib, hisobingizni tasdiqlang. Shundan so'ng kirishingiz mumkin."
+            : "Emailingizga yuborilgan havolani ochib, hisobingizni tasdiqlang. Shundan so'ng kirishingiz mumkin.",
         });
       }
-    } catch (error: any) {
-      toast({ title: "Xatolik", description: error.message, variant: "destructive" });
+    } catch (error: unknown) {
+      toast({ title: "Xatolik", description: authErrorMessage(error), variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -104,7 +131,7 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       if (error) throw error;
 
       if (data.user) {
@@ -153,8 +180,8 @@ const Auth = () => {
         });
         navigate(checkFarmerRole ? "/farmer" : "/");
       }
-    } catch (error: any) {
-      toast({ title: "Xatolik", description: error.message, variant: "destructive" });
+    } catch (error: unknown) {
+      toast({ title: "Xatolik", description: authErrorMessage(error), variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -238,6 +265,9 @@ const Auth = () => {
                     <Button type="submit" className="w-full" disabled={loading}>
                       {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       Kirish
+                    </Button>
+                    <Button type="button" variant="link" className="w-full whitespace-normal h-auto" disabled={loading} onClick={resendConfirmation}>
+                      Tasdiqlash xatini qayta yuborish
                     </Button>
                   </form>
                 </TabsContent>
@@ -356,6 +386,9 @@ const Auth = () => {
                       {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       <Tractor className="mr-2 h-4 w-4" />
                       Fermer kirish
+                    </Button>
+                    <Button type="button" variant="link" className="w-full whitespace-normal h-auto" disabled={loading} onClick={resendConfirmation}>
+                      Tasdiqlash xatini qayta yuborish
                     </Button>
                   </form>
                 </TabsContent>
