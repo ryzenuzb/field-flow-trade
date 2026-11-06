@@ -38,8 +38,10 @@ const ResetPassword = () => {
       setError(error.code === "weak_password" ? "Kuchliroq parol tanlang." : error.code === "same_password" ? "Yangi parol eskisidan farq qilishi kerak." : "Parol yangilanmadi. Havola eskirgan bo'lishi mumkin — qaytadan so'rang.");
       return;
     }
-    toast({ title: "Parol yangilandi", description: "Endi yangi parol bilan foydalanishingiz mumkin." });
-    navigate("/");
+    // Tiklash sessiyasini barcha qurilmalarda yopamiz — havola qayta ishlamaydi
+    await supabase.auth.signOut({ scope: "global" });
+    toast({ title: "Parol yangilandi", description: "Yangi parolingiz bilan qayta kiring." });
+    navigate("/auth");
   };
 
   return (
