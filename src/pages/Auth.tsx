@@ -269,6 +269,9 @@ const Auth = () => {
                     <Button type="button" variant="link" className="w-full whitespace-normal h-auto" disabled={loading} onClick={resendConfirmation}>
                       Tasdiqlash xatini qayta yuborish
                     </Button>
+                    <Button type="button" variant="link" className="w-full h-auto" onClick={() => navigate("/forgot-password")}>
+                      Parolni unutdingizmi?
+                    </Button>
                   </form>
                 </TabsContent>
 
@@ -389,6 +392,9 @@ const Auth = () => {
                     </Button>
                     <Button type="button" variant="link" className="w-full whitespace-normal h-auto" disabled={loading} onClick={resendConfirmation}>
                       Tasdiqlash xatini qayta yuborish
+                    </Button>
+                    <Button type="button" variant="link" className="w-full h-auto" onClick={() => navigate("/forgot-password")}>
+                      Parolni unutdingizmi?
                     </Button>
                   </form>
                 </TabsContent>
