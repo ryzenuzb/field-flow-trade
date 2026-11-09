@@ -1,0 +1,1 @@
+Use the shared Help page for public FAQ, support, terms, and privacy routes so footer destinations remain consistent without duplicating page layouts.

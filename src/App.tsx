@@ -19,6 +19,7 @@ import FarmerApplication from "./pages/FarmerApplication";
 import OrderHistory from "./pages/OrderHistory";
 import SoilCheck from "./pages/SoilCheck";
 import Leaderboard from "./pages/Leaderboard";
+import Help from "./pages/Help";
 
 import NotFound from "./pages/NotFound";
 
@@ -47,6 +48,10 @@ const App = () => (
             <Route path="/orders" element={<OrderHistory />} />
             <Route path="/soil-check" element={<SoilCheck />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/faq" element={<Help section="faq" />} />
+            <Route path="/support" element={<Help section="support" />} />
+            <Route path="/terms" element={<Help section="terms" />} />
+            <Route path="/privacy" element={<Help section="privacy" />} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

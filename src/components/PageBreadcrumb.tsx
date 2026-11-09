@@ -20,6 +20,10 @@ const routeNames: Record<string, string> = {
   "/farmer/apply": "Fermer Ariza",
   "/orders": "Buyurtmalar",
   "/soil-check": "Tuproq Tahlili",
+  "/faq": "Ko‘p so‘raladigan savollar",
+  "/support": "Qo‘llab-quvvatlash",
+  "/terms": "Foydalanish qoidalari",
+  "/privacy": "Maxfiylik",
 };
 
 export function PageBreadcrumb() {
