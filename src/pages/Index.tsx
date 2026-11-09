@@ -270,8 +270,19 @@ const Index = () => {
             <div>
               <h4 className="font-semibold mb-4">Bog'lanish</h4>
               <ul className="space-y-2 text-gray-300">
-                <li>+998 90 123 45 67</li>
-                <li>info@farmtrade.uz</li>
+                <li>
+                  <a href="tel:+998948165566" className="hover:text-green-400 transition-colors">
+                    +998 94 816 55 66
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="mailto:mahmudovmurodjon111@gmail.com"
+                    className="hover:text-green-400 transition-colors break-all"
+                  >
+                    mahmudovmurodjon111@gmail.com
+                  </a>
+                </li>
                 <li>Toshkent, O'zbekiston</li>
               </ul>
             </div>
