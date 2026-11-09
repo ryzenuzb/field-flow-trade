@@ -9,7 +9,7 @@ import { WeatherWidget } from "@/components/WeatherWidget";
 import SubAdminPanel from "@/components/SubAdminPanel";
 import PricingSection from "@/components/PricingSection";
 import HowItWorksSection from "@/components/HowItWorksSection";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -260,10 +260,10 @@ const Index = () => {
             <div>
               <h4 className="font-semibold mb-4">Yordam</h4>
               <ul className="space-y-2 text-gray-300">
-                <li>FAQ</li>
-                <li>Qo'llab-quvvatlash</li>
-                <li>Qoidalar</li>
-                <li>Maxfiylik</li>
+                <li><Link to="/faq" className="hover:underline underline-offset-4">FAQ</Link></li>
+                <li><Link to="/support" className="hover:underline underline-offset-4">Qo'llab-quvvatlash</Link></li>
+                <li><Link to="/terms" className="hover:underline underline-offset-4">Qoidalar</Link></li>
+                <li><Link to="/privacy" className="hover:underline underline-offset-4">Maxfiylik</Link></li>
               </ul>
             </div>
             
@@ -283,7 +283,7 @@ const Index = () => {
                     mahmudovmurodjon111@gmail.com
                   </a>
                 </li>
-                <li>Toshkent, O'zbekiston</li>
+                <li><a href="https://www.google.com/maps/search/?api=1&query=Toshkent%2C%20O%27zbekiston" target="_blank" rel="noopener noreferrer" className="hover:underline underline-offset-4">Toshkent, O'zbekiston</a></li>
               </ul>
             </div>
           </div>
